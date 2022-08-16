@@ -1,0 +1,30 @@
+{
+    "name": "carmelosantana/ender-hive",
+    "description": "PocketMine server manager for WordPress.",
+    "type": "project",
+    "license": "GNU General Public License v2",
+    "authors": [
+        {
+            "name": "Carmelo Santana",
+            "email": "me@carmelosantana.com"
+        }
+    ],    
+    "autoload": {
+        "psr-4": {
+            "CarmeloSantana\\EnderHive\\": "src/"
+        }
+    },
+    "require": {
+        "php": "^8.0",
+        "htmlburger/carbon-fields": "^3.3",
+        "xpaw/php-minecraft-query": "^4.0",
+        "ramsey/uuid": "^4.3",
+        "mikehaertl/php-shellcommand": "^1.6",
+        "woocommerce/action-scheduler": "^3.4",
+        "symfony/process": "^6.0",
+        "symfony/yaml": "^6.0",
+        "s1lentium/iptools": "^1.1",
+        "kassner/log-parser": "~2.0",
+        "spatie/ray": "^1.35"
+    }
+}
