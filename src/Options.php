@@ -34,34 +34,7 @@ class Options
     public function metas(): void
     {
         Container::make('post_meta', __('Server', ENDER_HIVE))
-            ->add_tab(__('Server Properties', ENDER_HIVE), $this->optionsServerProperties())
-            ->add_tab(__('Network', ENDER_HIVE), [
-                Field::make('text', 'host_cname', __('Host CNAME', ENDER_HIVE))
-                    ->set_default_value(carbon_get_theme_option('host_cname'))
-                    ->set_width(50),
-                Field::make('text', 'host_ip', __('Host IP', ENDER_HIVE))
-                    ->set_default_value(carbon_get_theme_option('host_ip'))
-                    ->set_width(50),
-            ])
-            ->add_tab(__('Setup', ENDER_HIVE), [
-                Field::make('separator', 'separator_log', __('Log', ENDER_HIVE)),
-                Field::make('text', 'job_history', __('Job History', ENDER_HIVE))
-                    ->set_attribute('data-readonly', 'true')
-                    ->set_width(50),
-                Field::make('separator', 'separator_install', __('Install', ENDER_HIVE)),
-                Field::make('select', 'installer_status', __('Installer Status', ENDER_HIVE))
-                    ->set_attribute('data-readonly', 'true')
-                    ->set_default_value(0)
-                    ->set_options([
-                        0 => __('', ENDER_HIVE),
-                        1 => __('Success', ENDER_HIVE),
-                        2 => __('Error', ENDER_HIVE),
-                        3 => __('Pending', ENDER_HIVE),
-                    ])
-                    ->set_width(50),
-                Field::make('textarea', 'installer_log', __('Installer Log', ENDER_HIVE))
-                    ->set_attribute('data-readonly', 'true'),
-            ]);
+            ->add_tab(__('Server Properties', ENDER_HIVE), $this->optionsServerProperties());
     }
 
     public function options(): void
@@ -107,7 +80,7 @@ class Options
                             ->set_attribute('type', 'number')
                             ->set_width(50),
                     ]),
-                Field::make('radio', 'mc_port_assignment', __('Port Assignment', ENDER_HIVE))
+                Field::make('radio', 'port_assignment', __('Port Assignment', ENDER_HIVE))
                     ->add_options([
                         'random' => __('Random', ENDER_HIVE),
                         'sequential' => __('Sequential', ENDER_HIVE),
