@@ -10,28 +10,30 @@ use Symfony\Component\Process\Process;
 
 class Command
 {
-    public function __construct(private string $instance)
+    public function __construct(private int $id)
     {
-        $this->host = $this->getHost($instance);
+        $this->host = $this->getHost($id);
     }
 
-    // TODO: Add auth check.
-    public static function exec(array $command): string
+    public static function exec(array $command): bool
     {
         ray($command)->label('Process, $command');
 
         $process = new Process($command);
-        $process->run();
 
-        $out = '';
-        if (!$process->isSuccessful()) {
-            throw new ProcessFailedException($process);
+        try {
+            $process->mustRun();
+
+            $log = $process->getOutput();
+            $out = true;
+
+        } catch (ProcessFailedException $exception) {
+            $log = $exception->getMessage();
+            $out = false;
         }
 
-        $out .= $process->getOutput();
+        ray($log)->label('Process, $out');
 
-        ray($out)->label('Process, $out');
-        
         return $out;
     }
 
@@ -39,7 +41,7 @@ class Command
     {
         switch (\carbon_get_theme_option('ender_hive_host')) {
             default:
-                return new Screen($this->instance);
+                return new Screen($this->id);
         }
     }
 
