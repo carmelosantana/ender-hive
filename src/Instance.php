@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace CarmeloSantana\EnderHive;
 
 use Ramsey\Uuid\Uuid;
+use \WP_Filesystem_Direct;
 
 class Instance
 {
@@ -17,6 +18,8 @@ class Instance
         // WordPress hooks
         add_action('init', [$this, 'postType']);
         add_action('save_post_instance', [$this, 'create'], 10, 2);
+        add_action('before_delete_post', [$this, 'delete']);
+        add_action('wp_trash_post', [$this, 'trash']);
 
         // Available actions
         add_action(self::INSTALL, [$this, 'install']);
@@ -70,7 +73,6 @@ class Instance
             $job_id = as_schedule_single_action($timestamp, self::INSTALL, $args);
 
             // Logging
-            ray($job_id)->label('Action Scheduled, Installer');
             carbon_set_post_meta($post->ID, 'installer_status', 3);
         }
     }
@@ -104,9 +106,30 @@ class Instance
         ]);
     }
 
-    public static function getPath($post_name): string
+    public function delete(int $post_id): void
     {
-        $url = Options::get('path_pmmp') . DIRECTORY_SEPARATOR . Jargon::INSTANCES . DIRECTORY_SEPARATOR . $post_name;
+        $server = new Server($post_id);
+        $server->stopWait();
+
+        if (file_exists($server->getPath())) {
+            include_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-base.php';
+            include_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-direct.php';
+
+            if (class_exists('WP_Filesystem_Direct')) {
+                (new \WP_Filesystem_Direct([]))->rmdir($server->getPath(), true);
+            }
+        }
+    }
+
+    public function trash(int $post_id): void
+    {
+        $server = new Server($post_id);
+        $server->stop();
+    }
+
+    public static function getPath($id): string
+    {
+        $url = Options::get('path_pmmp') . DIRECTORY_SEPARATOR . Jargon::INSTANCES . DIRECTORY_SEPARATOR . (string) $id;
 
         return $url;
     }
@@ -115,7 +138,6 @@ class Instance
     {
         // Get the post
         $post = get_post($post_id);
-        ray($post->ID)->label('install()');
 
         // Run PMMP installer
         $installer = new Installer($post);
