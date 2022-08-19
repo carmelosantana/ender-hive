@@ -4,13 +4,17 @@ declare(strict_types=1);
 
 namespace CarmeloSantana\EnderHive\API;
 
+use CarmeloSantana\EnderHive\Jargon;
+use CarmeloSantana\EnderHive\Server;
+use CarmeloSantana\EnderHive\Status;
+use \stdClass;
 use \WP_Error;
 
 class Instance extends Base
 {
     public function __construct()
     {
-        $this->resource_name = 'instances'; 
+        $this->resource_name = Jargon::INSTANCES;
     }
 
     // Register our routes.
@@ -24,8 +28,9 @@ class Instance extends Base
                 'permission_callback' => [$this, 'get_items_permissions_check'],
             ],
             // Register our schema callback.
-            'schema' => [$this, 'get_item_schema'
-        ],
+            'schema' => [
+                $this, 'get_item_schema'
+            ],
         ]);
         register_rest_route($this->namespace, '/' . $this->resource_name . '/(?P<id>[\d]+)', array(
             // Notice how we are registering multiple endpoints the 'schema' equates to an OPTIONS request.
@@ -38,15 +43,21 @@ class Instance extends Base
             'schema' => [$this, 'get_item_schema'],
         ));
         register_rest_route($this->namespace, '/' . $this->resource_name . '/(?P<id>[\d]+)/start', array(
-            // Notice how we are registering multiple endpoints the 'schema' equates to an OPTIONS request.
             [
-                'methods'   => 'PUT',
+                'methods'   => 'POST',
                 'callback'  => [$this, 'start'],
                 'permission_callback' => [$this, 'get_item_permissions_check'],
             ],
-            // Register our schema callback.
-            'schema' => [$this, 'get_item_schema'],
-        ));        
+            'schema' => [$this, 'get_status_schema'],
+        ));
+        register_rest_route($this->namespace, '/' . $this->resource_name . '/(?P<id>[\d]+)/stop', array(
+            [
+                'methods'   => 'POST',
+                'callback'  => [$this, 'stop'],
+                'permission_callback' => [$this, 'get_item_permissions_check'],
+            ],
+            'schema' => [$this, 'get_status_schema'],
+        ));
     }
 
     /**
@@ -152,6 +163,29 @@ class Instance extends Base
         return $this->schema;
     }
 
+    public function get_status_schema()
+    {
+        if (isset($this->schema)) {
+            // Since WordPress 5.3, the schema can be cached in the $schema property.
+            return $this->schema;
+        }
+
+        $this->schema = array(
+            '$schema'              => 'http://json-schema.org/draft-04/schema#',
+            'title'                => 'post',
+            'type'                 => 'object',
+            'properties'           => array(
+                'status_code' => array(
+                    'description'  => esc_html__('The status of the instance.', ENDER_HIVE),
+                    'type'         => 'integer',
+                    'readonly'     => true,
+                ),
+            ),
+        );
+
+        return $this->schema;
+    }
+
     /**
      * Matches the post data to the schema we want.
      *
@@ -173,5 +207,41 @@ class Instance extends Base
         }
 
         return rest_ensure_response($post_data);
+    }
+
+    public function start($request)
+    {
+        $id = (int) $request['id'];
+        $server = new Server($id);
+        $status = $server->getStatus();
+
+        switch ($status) {
+            case Status::FOUND:
+                $server->start();
+                $status = Status::ACCEPTED;
+                break;
+        }
+
+        $output = new stdClass();
+
+        return $this->rest_ensure_response($output, $status);
+    }
+
+    public function stop($request)
+    {
+        $id = (int) $request['id'];
+        $server = new Server($id);
+        $status = $server->getStatus();
+
+        switch ($status) {
+            case Status::FOUND:
+                $server->stop();
+                $status = Status::ACCEPTED;
+                break;
+        }
+
+        $output = new stdClass();
+
+        return $this->rest_ensure_response($output, $status);
     }
 }
