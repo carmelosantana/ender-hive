@@ -65,8 +65,6 @@ class Network
         sort($ports);
         $ports = array_unique($ports);
 
-        ray(count($ports))->label('Available Ports');
-
         return $ports;
     }
 
@@ -74,7 +72,7 @@ class Network
     {
         $this->getAvailablePorts();
 
-        switch (Options::get('mc_port_assignment')) {
+        switch (Options::get('port_assignment')) {
             case 'random':
                 $key = array_rand($this->available_ports);
                 $port = $this->available_ports[$key];
