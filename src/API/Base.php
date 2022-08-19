@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace CarmeloSantana\EnderHive\API;
 
 use CarmeloSantana\EnderHive\Jargon;
+use CarmeloSantana\EnderHive\Status;
 use \WP_Error;
+use \WP_HTTP_Response;
+use \WP_REST_Response;
 
 class Base
 {
@@ -226,4 +229,26 @@ class Base
 
         return $status;
     }
+
+    public function rest_ensure_response( $response, int $status=Status::OK ) {        
+        if ( is_wp_error( $response ) ) {
+            return $response;
+        }
+     
+        if ( $response instanceof WP_REST_Response ) {
+            return $response;
+        }
+     
+        // While WP_HTTP_Response is the base class of WP_REST_Response, it doesn't provide
+        // all the required methods used in WP_REST_Server::dispatch().
+        if ( $response instanceof WP_HTTP_Response ) {
+            return new WP_REST_Response(
+                $response->get_data(),
+                $response->get_status(),
+                $response->get_headers()
+            );
+        }
+     
+        return new WP_REST_Response( $response, $status );
+    }    
 }
