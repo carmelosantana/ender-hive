@@ -37,7 +37,7 @@ class Installer
         $this->install_file = $this->instance_dir . '/install.sh';
 
         wp_remote_get(
-            carbon_get_theme_option('pmmp_install_sh_url'),
+            Options::get('pmmp_install_sh_url'),
             [
                 'timeout' => 15,
                 'stream' => true,

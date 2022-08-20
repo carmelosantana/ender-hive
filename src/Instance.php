@@ -63,7 +63,7 @@ class Instance
         add_action('save_post_instance', [$this, __FUNCTION__], 200, 2);
 
         // Only fire installer on first save.
-        $status = carbon_get_post_meta($post->ID, 'installer_status');
+        $status = Options::getMeta($post->ID, 'installer_status');
         if (isset($_POST['hidden_post_status']) and $_POST['hidden_post_status'] == 'draft' and !$status) {
             // Schedule task.
             $timestamp = Options::get('installer_delay') == 0 ? time() : strtotime('+' . Options::get('installer_delay') . ' minute');

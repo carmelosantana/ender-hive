@@ -52,7 +52,7 @@ class Server
                 continue;
             }
 
-            $this->server_properties[$property] = carbon_get_post_meta($this->post_id, $property);
+            $this->server_properties[$property] = Options::getMeta($this->post_id, $property);
         }
     }
 

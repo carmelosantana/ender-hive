@@ -36,7 +36,7 @@ class Command
 
     public function initHost(): void
     {
-        switch (\carbon_get_theme_option('ender_hive_host')) {
+        switch (Options::get('ender_hive_host')) {
             default:
                 $this->host = new Screen($this->post_id);
                 break;
