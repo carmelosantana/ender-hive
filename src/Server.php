@@ -8,6 +8,8 @@ class Server
 {
     public const LOCK_FILE = 'server.lock';
 
+    private string $nonce = '';
+
     public function __construct(private int $post_id)
     {
         if (!get_post_status($post_id)) {
@@ -16,14 +18,12 @@ class Server
             $this->status = Status::FOUND;
             $this->init();
         }
-
-        return $this;
     }
 
     public function command()
     {
         if (!isset($this->command)) {
-            $this->command = new Command($this->post->ID);
+            $this->command = new Command($this->post->ID, $this->nonce);
             $this->init();
         }
 
@@ -68,12 +68,10 @@ class Server
     public function getServerLock(): int
     {
         if (!file_exists($this->getLockFilePath())) {
-            $this->server_lock = 0;
+            return 0;
         } else {
-            $this->server_lock = (int) file_get_contents($this->getLockFilePath());
+            return (int) file_get_contents($this->getLockFilePath());
         }
-
-        return $this->server_lock;
     }
 
     public function getLockFilePath(): string
@@ -107,8 +105,6 @@ class Server
             $this->status = $status;
         } elseif ($this->isRunning()) {
             $this->status = Status::OK;
-        } else {
-            $this->status = Status::NOT_FOUND;
         }
     }
 
@@ -117,26 +113,37 @@ class Server
         return Utils::isEnabled($this->server_properties['enable-ipv6']);
     }
 
-    public function start(): void
+    public function setAuth(string $auth): void
     {
-        if ($this->isRunning()) {
-            return;
-        }
-
-        $this->command()->start();
+        $this->nonce = $auth;
     }
 
-    public function stop(): void
+    public function start(): int
+    {
+        switch (get_post_status($this->post->ID)) {
+            case 'publish':
+            case 'draft':
+                return $this->command()->start();
+                break;
+        }
+        return Status::NOT_FOUND;
+    }
+
+    public function stop(): int
     {
         if (!$this->isRunning()) {
-            return;
+            return Status::OK;
         }
 
-        $message = $this->command()->stop();
+        $status = $this->command()->stop();
 
-        if (!$message) {
-            $this->removeLockFile();
+        switch ($status) {
+            case Status::INTERNAL_SERVER_ERROR:
+                $this->removeLockFile();
+                break;
         }
+
+        return $status;
     }
 
     public function removeLockFile(): void
@@ -146,7 +153,7 @@ class Server
         }
     }
 
-    public function stopWait(): void
+    public function stopWait(): int
     {
         $this->stop();
 
@@ -154,5 +161,7 @@ class Server
         while ($this->isRunning()) {
             usleep(250000);
         }
+
+        return $this->getStatus();
     }
 }
