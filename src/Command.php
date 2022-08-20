@@ -5,52 +5,50 @@ declare(strict_types=1);
 namespace CarmeloSantana\EnderHive;
 
 use CarmeloSantana\EnderHive\Host\Screen;
-use Symfony\Component\Process\Exception\ProcessFailedException;
-use Symfony\Component\Process\Process;
 
 class Command
 {
-    public function __construct(private int $id)
+    public function __construct(private int $post_id, private string $nonce = '')
     {
-        $this->host = $this->getHost($id);
-    }
-
-    public static function exec(array $command): bool
-    {
-        ray($command)->label('Process, $command');
-
-        $process = new Process($command);
-
-        try {
-            $process->mustRun();
-
-            $log = $process->getOutput();
-            $out = true;
-
-        } catch (ProcessFailedException $exception) {
-            $log = $exception->getMessage();
-            $out = false;
+        if (!$this->checkAuth()) {
+            return new WP_Error('forbidden', __('You cannot access this resource.', ENDER_HIVE), ['status' => Permissions::authorizationStatusCode()]);
         }
 
-        ray($log)->label('Process, $out');
-
-        return $out;
+        $this->initHost($post_id);
     }
 
-    public function getHost(): object
+    public function checkAuth(string $key = 'command'): bool
+    {
+        if (current_user_can(Permissions::WRITE)) {
+            return true;
+        }
+
+        if (!empty($this->nonce)) {
+            $key = $key . '_' . $this->post_id;
+
+            if (wp_verify_nonce($this->nonce, $key)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function initHost(): void
     {
         switch (\carbon_get_theme_option('ender_hive_host')) {
             default:
-                return new Screen($this->id);
+                $this->host = new Screen($this->post_id);
+                break;
         }
     }
 
-    public function start(): bool
+    public function start(): int
     {
         return call_user_func([$this->host, 'start']);
     }
 
-    public function stop(): bool
+    public function stop(): int
     {
         return call_user_func([$this->host, 'stop']);
     }
