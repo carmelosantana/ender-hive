@@ -217,8 +217,7 @@ class Instance extends Base
 
         switch ($status) {
             case Status::FOUND:
-                $server->start();
-                $status = Status::ACCEPTED;
+                $status = $server->start();
                 break;
         }
 
@@ -234,9 +233,9 @@ class Instance extends Base
         $status = $server->getStatus();
 
         switch ($status) {
+            case Status::OK:
             case Status::FOUND:
-                $server->stop();
-                $status = Status::ACCEPTED;
+                $status = $server->stop();
                 break;
         }
 
