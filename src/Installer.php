@@ -9,10 +9,8 @@ use Symfony\Component\Process\Process;
 
 class Installer
 {
-    public function __construct(\WP_Post $post)
+    public function __construct(private \WP_Post $post)
     {
-        // Set post object
-        $this->post = $post;
     }
 
     public function assignPorts(): void
@@ -25,7 +23,7 @@ class Installer
 
     public function createInstanceDirectory(): void
     {
-        $this->instance_dir = Instance::getPath($this->post->post_name);
+        $this->instance_dir = Instance::getPath($this->post->ID);
 
         if (!file_exists($this->instance_dir)) {
             wp_mkdir_p($this->instance_dir);
