@@ -9,7 +9,7 @@ use \WP_Filesystem_Direct;
 
 class Instance
 {
-    const INSTALL = 'EnderHive\Instance\install';
+    const INSTALL = 'Instance\install';
 
     private object $command;
 
@@ -22,7 +22,7 @@ class Instance
         add_action('wp_trash_post', [$this, 'trash']);
 
         // Available actions
-        add_action(self::INSTALL, [$this, 'install']);
+        add_action(self::INSTALL, [$this, 'install'], 10, 2);
     }
 
     public function create(int $post_id, \WP_Post $post): void
@@ -69,11 +69,11 @@ class Instance
             $timestamp = Options::get('installer_delay') == 0 ? time() : strtotime('+' . Options::get('installer_delay') . ' minute');
 
             // Schedule the event
-            $args = [$post_id];
+            $args = [
+                $post_id,
+                wp_create_nonce('install_' . $post->ID)
+            ];
             $job_id = as_schedule_single_action($timestamp, self::INSTALL, $args);
-
-            // Logging
-            carbon_set_post_meta($post->ID, 'installer_status', 3);
         }
     }
 
@@ -112,8 +112,8 @@ class Instance
         $server->stopWait();
 
         if (file_exists($server->getPath())) {
-            include_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-base.php';
-            include_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-direct.php';
+            include_once ABSPATH . 'wp-admin' . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'class-wp-filesystem-base.php';
+            include_once ABSPATH . 'wp-admin' . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'class-wp-filesystem-direct.php';
 
             if (class_exists('WP_Filesystem_Direct')) {
                 (new \WP_Filesystem_Direct([]))->rmdir($server->getPath(), true);
@@ -134,8 +134,12 @@ class Instance
         return $url;
     }
 
-    public static function install($post_id): void
+    public static function install($post_id, $nonce): void
     {
+        if (!wp_verify_nonce($nonce, 'install_' . $post_id)) {
+            new WP_Error('forbidden', __('Authentication failed.', ENDER_HIVE));
+        }
+
         // Get the post
         $post = get_post($post_id);
 
@@ -145,6 +149,7 @@ class Instance
 
         // Start server
         $server = new Server($post->ID);
+        $server->setAuth(wp_create_nonce('command_' . $post_id));
         $server->start();
     }
 }
