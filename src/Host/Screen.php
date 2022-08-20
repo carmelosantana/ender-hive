@@ -8,7 +8,7 @@ use CarmeloSantana\EnderHive\Command as Command;
 use CarmeloSantana\EnderHive\Instance as Instance;
 use CarmeloSantana\EnderHive\Server;
 
-class Screen implements Host
+class Screen extends Host
 {
     private string $host = 'screen';
 
@@ -17,8 +17,7 @@ class Screen implements Host
     /**
      * Returns server instance. Requires post ID.
      *
-     * @param  int $id
-     * @return void
+     * @param int $id
      */
     public function __construct(private int $id)
     {
@@ -28,21 +27,26 @@ class Screen implements Host
     }
 
     /**
-     * Starts server with screen name of $id.
+     * Execute start.sh to start server.
      *
-     * @return bool
+     * @return int Status code
      */
-    public function start(): bool
+    public function start(): int
     {
         $command = [$this->host, '-dmS', $this->id, 'bash', $this->start];
 
-        return Command::exec($command);
+        return $this->exec($command);
     }
-
-    public function stop(): bool
+    
+    /**
+     * Send 'stop' to console and carriage return.
+     *
+     * @return int
+     */
+    public function stop(): int
     {
         $command = [$this->host, '-S', $this->id, '-p', '0', '-X', 'stuff', 'stop^M'];
 
-        return Command::exec($command);
+        return $this->exec($command);
     }
 }
