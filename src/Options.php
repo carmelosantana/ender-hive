@@ -173,22 +173,23 @@ class Options
         ];
     }
 
-    public static function get(string $option, $default = false, $prefix = '_')
+    public static function get(string $option)
     {
         return carbon_get_theme_option($option);
     }
 
-    public static function set(string $option, $value, $prefix = '_', $autoload = false)
+    public static function getMeta(int $id, string $option)
     {
-        $option = $prefix . $option;
-
-        return update_option($option, $value, $autoload);
+        return carbon_get_post_meta($id, $option);
     }
 
-    public static function setMeta($id, string $option, $value, $prefix = '_', $autoload = false)
+    public static function set(string $option, $value)
     {
-        // $option = $prefix . $option;
+        return carbon_set_theme_option($option, $value);
+    }
 
+    public static function setMeta(int $id, string $option, $value)
+    {
         return carbon_set_post_meta($id, $option, $value);
     }
 }
