@@ -233,7 +233,10 @@ HTACCESS;
     $properties = [];
 
     foreach (self::serverProperties() as $key => $value) {
-      $meta = carbon_get_post_meta($this->post->ID, $key);
+      if (is_string($key)) {
+        $meta = Options::getMeta($this->post->ID, $key);
+      }
+
       if ($meta) {
         $properties[$key] = $meta;
       } else {
