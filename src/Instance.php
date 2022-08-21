@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace CarmeloSantana\EnderHive;
 
 use Ramsey\Uuid\Uuid;
-use \WP_Filesystem_Direct;
 
 class Instance
 {
@@ -137,7 +136,7 @@ class Instance
     public static function install($post_id, $nonce): void
     {
         if (!wp_verify_nonce($nonce, 'install_' . $post_id)) {
-            new WP_Error('forbidden', __('Authentication failed.', ENDER_HIVE));
+            new \WP_Error('forbidden', __('Authentication failed.', ENDER_HIVE));
         }
 
         // Get the post
