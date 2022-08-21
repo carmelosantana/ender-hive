@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace CarmeloSantana\EnderHive;
 
-class Launcher
+class EnderHive
 {
     public function __construct()
     {
