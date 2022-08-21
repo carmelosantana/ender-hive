@@ -37,13 +37,15 @@ class Options
 
     public function options(): void
     {
-        $ip = gethostbyname(gethostname());
-        $hostname = gethostname();
-
         Container::make('theme_options', __(ENDER_HIVE_TITLE, ENDER_HIVE))
             ->set_icon('dashicons-networking')
             ->add_tab(__('Server Properties Defaults', ENDER_HIVE), $this->optionsServerProperties())
-            ->add_tab(__('System Defaults ', ENDER_HIVE), [
+            ->add_tab(__('System', ENDER_HIVE), [
+                Field::make('separator', 'separator_installation', __('Installation', ENDER_HIVE)),
+                Field::make('text', 'instance_path', __('Instances Directory', ENDER_HIVE))
+                    ->set_default_value(WP_CONTENT_DIR . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'pmmp')
+                    ->set_help_text(__('Path for server instances without trailing slash.', ENDER_HIVE))
+                    ->set_width(50),
                 Field::make('select', 'instance_slug_format', __('Instance Slug', ENDER_HIVE))
                     ->set_default_value('post_id')
                     ->set_options([
@@ -52,19 +54,15 @@ class Options
                         'title' => __('Title', ENDER_HIVE),
                     ])
                     ->set_width(50),
+                Field::make('text', 'pmmp_install_sh_url', __('PMMP Install URL', ENDER_HIVE))
+                    ->set_default_value('https://get.pmmp.io')
+                    ->set_width(50),
                 Field::make('text', 'installer_delay', __('Installer Delay', ENDER_HIVE))
                     ->set_attribute('type', 'number')
                     ->set_default_value(0)
                     ->set_help_text(__('Delay the installer for this many minutes.', ENDER_HIVE))
                     ->set_width(50),
-                Field::make('text', 'pmmp_install_sh_url', __('PMMP Install URL', ENDER_HIVE))
-                    ->set_default_value('https://get.pmmp.io')
-                    ->set_width(50),
-                Field::make('text', 'path_pmmp', __('PMMP root DIR', ENDER_HIVE))
-                    ->set_default_value(WP_CONTENT_DIR . '/uploads/pmmp')
-                    ->set_width(50),
-            ])
-            ->add_tab(__('Network', ENDER_HIVE), [
+                Field::make('separator', 'separator_network', __('Network', ENDER_HIVE)),
                 Field::make('complex', 'available_ports', __('Available Ports', ENDER_HIVE))
                     ->add_fields('range', [
                         Field::make('text', 'start', __('Start', ENDER_HIVE))
@@ -86,7 +84,7 @@ class Options
                     ->set_default_value('sequential'),
             ]);
     }
-
+ 
     public function optionsServerProperties(): array
     {
         return [
