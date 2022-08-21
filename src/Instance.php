@@ -128,7 +128,7 @@ class Instance
 
     public static function getPath($id): string
     {
-        $url = Options::get('path_pmmp') . DIRECTORY_SEPARATOR . Jargon::INSTANCES . DIRECTORY_SEPARATOR . (string) $id;
+        $url = Options::get('instance_path') . DIRECTORY_SEPARATOR . Jargon::INSTANCES . DIRECTORY_SEPARATOR . (string) $id;
 
         return $url;
     }
