@@ -6,6 +6,8 @@ namespace CarmeloSantana\EnderHive;
 
 class Jargon
 {
+    public const INSTANCE = 'instance';
+
     public const INSTANCES = 'instances';
 
     public const ERROR_FORBIDDEN = 'You cannot access this resource.';
