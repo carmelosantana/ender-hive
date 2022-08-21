@@ -21,7 +21,7 @@ class Config
 
       switch ($file['extension'] ?? null) {
         case 'properties':
-          $file['content'] = Utils::arrayToIni($file['content']);
+          $file['content'] = self::arrayToIni($file['content']);
           break;
 
         case 'yml':
@@ -247,4 +247,22 @@ HTACCESS;
 
     return $properties;
   }
+
+  public static function arrayToIni(array $array): string
+  {
+      $ini = '';
+      foreach ($array as $key => $value) {
+          if (is_bool($value)) {
+              $value = $value ? 'on' : 'off';
+          }
+
+          // If key is integer treat as comment.
+          if (is_int($key)) {
+              $ini .= '#' . $value . PHP_EOL;
+          } else {
+              $ini .= $key . '=' . $value . PHP_EOL;
+          }
+      }
+      return $ini;
+  }  
 }
