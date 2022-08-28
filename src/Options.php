@@ -241,12 +241,6 @@ class Options
         return $wp_get_mime_types;
     }
 
-    public static function combineMetaOption(int $id, string $option)
-    {
-        $meta = carbon_get_post_meta($id, $option);
-        $option = self::get($option);
-    }
-
     public static function get(string $option)
     {
         return carbon_get_theme_option($option);
