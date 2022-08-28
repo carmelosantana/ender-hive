@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace CarmeloSantana\EnderHive;
 
+use CarmeloSantana\EnderHive\Config\Create as CreateConfig;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
 
@@ -60,9 +61,8 @@ class Installer
         // Assign ports.
         $this->assignPorts();
 
-        // Get configs.
-        $this->config = new Config();
-        $this->config->allNew($this->post);
+        // Create new configs.
+        (new CreateConfig($this->post))->all();
     }
 
     public function run()
