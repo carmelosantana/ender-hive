@@ -3,7 +3,7 @@
 Plugin Name: Ender Hive
 Plugin URI: https://enderhive.com/
 Description: Minecraft server manager.
-Version: 0.1.0-alpha-4
+Version: 0.1.0-alpha-6
 Author: Carmelo Santana
 Author URI: https://carmelosantana.com/
 License: GNU General Public License v2 or later
@@ -29,4 +29,4 @@ if (!file_exists($action_scheduler = plugin_dir_path(__FILE__) . 'vendor/woocomm
 }
 require $action_scheduler;
 
-new \CarmeloSantana\EnderHive\Launcher();
+new \CarmeloSantana\EnderHive\EnderHive();

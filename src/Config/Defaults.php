@@ -2,80 +2,52 @@
 
 declare(strict_types=1);
 
-namespace CarmeloSantana\EnderHive;
+namespace CarmeloSantana\EnderHive\Config;
 
-use Symfony\Component\Yaml\Yaml;
-
-class Config
+class Defaults
 {
-  public function allNew(\WP_Post $post): void
-  {
-    $this->post = $post;
-
-    foreach ($this->defaultFiles() as $file) {
-      $file_path = Instance::getPath($post->post_name) . DIRECTORY_SEPARATOR . $file['filename'] . (isset($file['extension']) ? '.' . $file['extension'] : '');
-
-      if (isset($file['callback']) and is_callable($file['callback'])) {
-        $file['content'] = call_user_func($file['callback']);
-      }
-
-      switch ($file['extension'] ?? null) {
-        case 'properties':
-          $file['content'] = Utils::arrayToIni($file['content']);
-          break;
-
-        case 'yml':
-          $file['content'] = Yaml::dump($file['content']);
-          break;
-      }
-
-      file_put_contents($file_path, ($file['content'] ?? ''));
-    }
-  }
-
-  public function defaultFiles(): array
+  public static function files(): array
   {
     return [
       'htaccess' => [
         'filename' => '.htaccess',
-        'callback' => [$this, 'defaultHtaccess'],
-
+        'callback' => [__CLASS__, 'htaccess'],
       ],
-      'banned_ips' => [
+      'banned_ips_txt' => [
         'filename' => 'banned-ips',
         'extension' => 'txt',
       ],
-      'banned_players' => [
+      'banned_players_txt' => [
         'filename' => 'banned-players',
         'extension' => 'txt',
       ],
-      'ops' => [
+      'ops_txt' => [
         'filename' => 'ops',
         'extension' => 'txt',
       ],
-      'plugin_list' => [
+      'plugin_list_yml' => [
         'filename' => 'plugin_list',
         'extension' => 'yml',
-        'callback' => [$this, 'defaultPluginList'],
+        'callback' => [__CLASS__, 'pluginList'],
       ],
-      'pocketmine' => [
+      'pocketmine_yml' => [
         'filename' => 'pocketmine',
         'extension' => 'yml',
-        'callback' => [$this, 'defaultPocketmine'],
+        'callback' => [__CLASS__, 'pocketmine'],
       ],
-      'server' => [
+      'server_properties' => [
         'filename' => 'server',
         'extension' => 'properties',
-        'callback' => [$this, 'generateServerProperties'],
+        'callback' => [__CLASS__, 'serverProperties'],
       ],
-      'white_list' => [
+      'white_list_xml' => [
         'filename' => 'white-list',
         'extension' => 'txt',
       ],
     ];
   }
 
-  public function defaultHtaccess(): string
+  public static function htaccess(): string
   {
     return <<<HTACCESS
 order allow,deny
@@ -83,17 +55,17 @@ deny from all
 HTACCESS;
   }
 
-  public function defaultPluginList(): array
+  public static function pluginList(): array
   {
     return [
       // blacklist: Only plugins which ARE NOT listed will load.
       // whitelist: Only plugins which ARE listed will load.
       'mode' => 'blacklist',
-      'plugins' => new \stdClass(),
+      'plugins' => [],
     ];
   }
 
-  public function defaultPocketmine(): array
+  public static function pocketmine(): array
   {
     return [
       'settings' => [
@@ -199,7 +171,7 @@ HTACCESS;
     ];
   }
 
-  static public function serverProperties(): array
+  public static function serverProperties(): array
   {
     return [
       'Properties Config file',
@@ -226,25 +198,5 @@ HTACCESS;
       'view-distance' => 16,
       'xbox-auth' => true,
     ];
-  }
-
-  public function generateServerProperties(): array
-  {
-    $properties = [];
-
-    foreach (self::serverProperties() as $key => $value) {
-      if (is_string($key)) {
-        $meta = Options::getMeta($this->post->ID, $key);
-      }
-
-      if ($meta) {
-        $properties[$key] = $meta;
-      } else {
-        $properties[$key] = $value;
-      }
-      $properties[$key] = $meta;
-    }
-
-    return $properties;
   }
 }

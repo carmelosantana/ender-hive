@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace CarmeloSantana\EnderHive;
 
-class Launcher
+class EnderHive
 {
     public function __construct()
     {
@@ -14,8 +14,16 @@ class Launcher
         // Primary loader
         add_action('after_setup_theme', [$this, 'start'], 11);
 
+        // Styles
+        add_action('admin_enqueue_scripts', [$this, 'enqueueStyles']);
+
         // Load the rest API
         add_action('rest_api_init', [$this, 'initRestApi']);
+    }
+
+    public function enqueueStyles(): void
+    {
+        wp_enqueue_style(ENDER_HIVE . '-admin', plugins_url('/assets/css/admin.css', ENDER_HIVE_FILE_PATH));
     }
 
     public function initCarbonFields(): void

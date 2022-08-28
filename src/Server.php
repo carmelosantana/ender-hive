@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace CarmeloSantana\EnderHive;
 
+use CarmeloSantana\EnderHive\Config\Defaults;
+
 class Server
 {
     public const LOCK_FILE = 'server.lock';
@@ -46,7 +48,7 @@ class Server
     {
         $this->server_properties = [];
 
-        foreach (Config::serverProperties() as $property => $default) {
+        foreach (Defaults::serverProperties() as $property => $default) {
             // Property is a comment.
             if (is_int($property)) {
                 continue;

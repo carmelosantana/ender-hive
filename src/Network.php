@@ -87,6 +87,16 @@ class Network
         return $port;
     }
 
+    public static function getHostname()
+    {
+        return gethostname();
+    }
+
+    public static function getIp()
+    {
+        return gethostbyname(gethostname());
+    }
+
     public static function isPortFree(int $port, string $host = '127.0.0.1'): bool
     {
         $socket = @fsockopen($host, $port, $errno, $errstr, 1);
