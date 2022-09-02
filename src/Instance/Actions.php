@@ -13,7 +13,7 @@ class Actions
         add_action('save_post_instance', [$this, 'create'], 10, 2);
         add_action('before_delete_post', [$this, 'delete']);
         add_action('wp_trash_post', [$this, 'trash']);
-        add_action('Instance\install', [$this, 'install'], 10, 2);
+        add_action('Instance\install', [$this, 'install']);
     }
 
     /**
@@ -40,7 +40,6 @@ class Actions
             // Schedule the event
             $args = [
                 $post_id,
-                wp_create_nonce('install' . $post_id)
             ];
             as_schedule_single_action(time(), 'Instance\install', $args);
         }
@@ -82,18 +81,13 @@ class Actions
     }
 
     /**
-     * Installs server via scheduled action. Requires nonce.
+     * Installs server via scheduled action.
      *
      * @param  mixed $post_id
-     * @param  mixed $nonce
      * @return void
      */
-    public static function install($post_id, $nonce): void
+    public static function install($post_id): void
     {
-        if (!wp_verify_nonce($nonce, 'install' . $post_id)) {
-            new \WP_Error('forbidden', __('Authentication failed.', ENDER_HIVE));
-        }
-
         $server = new Server($post_id);
         $server->install();
         $server->start();
