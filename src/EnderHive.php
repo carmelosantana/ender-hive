@@ -9,10 +9,10 @@ class EnderHive
     public function __construct()
     {
         // Setup Carbon fields
-        add_action('after_setup_theme', [$this, 'initCarbonFields'], 10);
+        add_action('after_setup_theme', [$this, 'initCarbonFields']);
 
         // Primary loader
-        add_action('after_setup_theme', [$this, 'start'], 11);
+        add_action('after_setup_theme', [$this, 'start']);
 
         // Styles
         add_action('admin_enqueue_scripts', [$this, 'enqueueStyles']);
@@ -25,7 +25,12 @@ class EnderHive
     {
         wp_enqueue_style(ENDER_HIVE . '-admin', plugins_url('/assets/css/admin.css', ENDER_HIVE_FILE_PATH));
     }
-
+    
+    /**
+     * Carbon Fields handles all options and meta fields.
+     *
+     * @return void
+     */
     public function initCarbonFields(): void
     {
         // Must define to fix JS loading bugs
@@ -34,21 +39,31 @@ class EnderHive
         // Load Carbon Fields
         \Carbon_Fields\Carbon_Fields::boot();
     }
-
+    
+    /**
+     * Registers REST API routes.
+     *
+     * @return void
+     */
     public function initRestApi(): void
     {
         (new API\Instance())->register_routes();
     }
-
+    
+    /**
+     * Bootstrap for necessary actions and filters.
+     * Fires after dependencies are loaded and the theme is setup.
+     * - Dependencies: Carbon_Fields\Carbon_Fields
+     *
+     * @return void
+     */
     public function start(): void
     {
         // Instance support
-        new Instance();
-
-        // Network tools
-        new Network();
-
+        new Instance\Actions();
+        new Instance\PostType();
+        
         // Plugin and meta options
-        new Options();
+        new Options\Fields();
     }
 }
