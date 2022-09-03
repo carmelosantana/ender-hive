@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
-namespace CarmeloSantana\EnderHive;
+namespace CarmeloSantana\EnderHive\User;
+
+use CarmeloSantana\EnderHive\Host\Status;
 
 class Permissions
 {
@@ -10,7 +12,7 @@ class Permissions
     public const ADMIN = 'manage_options';
     public const READ = 'read';
     public const WRITE = 'publish_posts';
-    
+
     /**
      * Provides status code for authorization.
      *
