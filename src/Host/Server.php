@@ -44,7 +44,7 @@ class Server
         }
 
         // Is $this->host implemented from Base?
-        if (!$this->host instanceof Base) {
+        if (!$this->host instanceof Host) {
             wp_die('Host is not implemented from Base');
         }
     }
@@ -56,12 +56,14 @@ class Server
      * @param  mixed $file [filename => file, extension => txt]
      * @return string
      */
-    public static function getInstancePath(int|string $post_id, array $file = []): string
+    public static function getInstancePath(int|string $post_id, array|string $file = []): string
     {
         $path = DIRECTORY_SEPARATOR;
 
-        if (!empty($file)) {
+        if (!empty($file) and is_array($file)) {
             $path .= $file['filename'] . (isset($file['extension']) ? '.' . $file['extension'] : '');
+        } elseif (!empty($file) and is_string($file)) {
+            $path .= $file;
         }
 
         return carbon_get_theme_option('instance_path') . DIRECTORY_SEPARATOR . (string) $post_id . $path;
