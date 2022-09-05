@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace CarmeloSantana\EnderHive\Tools;
 
 class Utils
-{    
+{
     /**
      * Converts array to ini file.
      *
@@ -29,7 +29,7 @@ class Utils
         }
         return $ini;
     }
-    
+
     /**
      * Download wrapper ends execution if file not found.
      *
@@ -68,7 +68,6 @@ class Utils
         return filter_var($variable, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
     }
 
-    
     /**
      * Converts an array a string of items separated by line breaks.
      *
@@ -82,5 +81,25 @@ class Utils
             $output .= $item . PHP_EOL;
         }
         return $output;
+    }
+
+    /**
+     * Removes first 2 lines for quick comparison of server.properties file.
+     *
+     * @param string $string String to remove lines from.
+     * @param int $remove Number of lines to remove.
+     * @return string
+     */
+    public static function removeFirstTwoLines(string $string, int $remove = 2): string
+    {
+        $lines = explode(PHP_EOL, $string);
+        $count = 0;
+
+        while ($count < $remove) {
+            array_shift($lines);
+            $count++;
+        }
+
+        return implode(PHP_EOL, $lines);
     }
 }
