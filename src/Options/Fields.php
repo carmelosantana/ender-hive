@@ -6,8 +6,9 @@ namespace CarmeloSantana\EnderHive\Options;
 
 use Carbon_Fields\Container;
 use Carbon_Fields\Field;
-use CarmeloSantana\EnderHive\Host\PocketMineMP\Server as PocketMineConfig;
+use CarmeloSantana\EnderHive\Host\PocketMineMP\Server as PocketMineMP;
 use CarmeloSantana\EnderHive\Tools\Network;
+use CarmeloSantana\EnderHive\Tools\Utils;
 
 class Fields
 {
@@ -29,6 +30,7 @@ class Fields
     {
         add_action('carbon_fields_register_fields', [$this, 'metas']);
         add_action('carbon_fields_register_fields', [$this, 'options']);
+        add_action('carbon_fields_post_meta_container_saved', [$this, 'writeServerProperties']);
         add_filter('upload_mimes', [$this, 'uploadMimeTypes']);
     }
 
@@ -160,11 +162,11 @@ class Fields
     {
         return [
             Field::make('select', 'language', __('Language', ENDER_HIVE))
-                ->set_default_value(PocketMineConfig::defaultServerProperties()['language'])
+                ->set_default_value(PocketMineMP::defaultServerProperties()['language'])
                 ->set_options($this->languages)
                 ->set_width(100),
             Field::make('select', 'gamemode', __('Gamemode', ENDER_HIVE))
-                ->set_default_value(PocketMineConfig::defaultServerProperties()['gamemode'])
+                ->set_default_value(PocketMineMP::defaultServerProperties()['gamemode'])
                 ->set_options([
                     'survival' => __('Survival', ENDER_HIVE),
                     'creative' => __('Creative', ENDER_HIVE),
@@ -173,7 +175,7 @@ class Fields
                 ])
                 ->set_width(50),
             Field::make('select', 'difficulty', __('Difficulty', ENDER_HIVE))
-                ->set_default_value(PocketMineConfig::defaultServerProperties()['difficulty'])
+                ->set_default_value(PocketMineMP::defaultServerProperties()['difficulty'])
                 ->set_options([
                     0 => __('Peaceful', ENDER_HIVE),
                     1 => __('Easy', ENDER_HIVE),
@@ -182,60 +184,88 @@ class Fields
                 ])
                 ->set_width(50),
             Field::make('text', 'server-name', __('Server Name', ENDER_HIVE))
-                ->set_default_value(PocketMineConfig::defaultServerProperties()['server-name'])
+                ->set_default_value(PocketMineMP::defaultServerProperties()['server-name'])
                 ->set_width(50),
             Field::make('text', 'motd', __('MOTD', ENDER_HIVE))
-                ->set_default_value(PocketMineConfig::defaultServerProperties()['motd'])
+                ->set_default_value(PocketMineMP::defaultServerProperties()['motd'])
                 ->set_width(50),
             Field::make('checkbox', 'force-gamemode', __('Force Gamemode', ENDER_HIVE))
-                ->set_default_value(PocketMineConfig::defaultServerProperties()['force-gamemode'])
+                ->set_default_value(PocketMineMP::defaultServerProperties()['force-gamemode'])
                 ->set_width(33),
             Field::make('checkbox', 'hardcore', __('Hardcore', ENDER_HIVE))
-                ->set_default_value(PocketMineConfig::defaultServerProperties()['hardcore'])
+                ->set_default_value(PocketMineMP::defaultServerProperties()['hardcore'])
                 ->set_width(33),
             Field::make('checkbox', 'pvp', __('PvP', ENDER_HIVE))
-                ->set_default_value(PocketMineConfig::defaultServerProperties()['pvp'])
+                ->set_default_value(PocketMineMP::defaultServerProperties()['pvp'])
                 ->set_width(33),
             Field::make('text', 'generator-settings', __('Generator Settings', ENDER_HIVE))
-                ->set_default_value(PocketMineConfig::defaultServerProperties()['generator-settings'])
+                ->set_default_value(PocketMineMP::defaultServerProperties()['generator-settings'])
                 ->set_width(50),
             Field::make('text', 'level-name', __('Level Name', ENDER_HIVE))
-                ->set_default_value(PocketMineConfig::defaultServerProperties()['level-name'])
+                ->set_default_value(PocketMineMP::defaultServerProperties()['level-name'])
                 ->set_width(50),
             Field::make('text', 'level-seed', __('Level Seed', ENDER_HIVE))
-                ->set_default_value(PocketMineConfig::defaultServerProperties()['level-seed'])
+                ->set_default_value(PocketMineMP::defaultServerProperties()['level-seed'])
                 ->set_width(50),
             Field::make('select', 'level-type', __('Level Type', ENDER_HIVE))
-                ->set_default_value(PocketMineConfig::defaultServerProperties()['level-type'])
+                ->set_default_value(PocketMineMP::defaultServerProperties()['level-type'])
                 ->set_options([
                     'DEFAULT' => __('Default', ENDER_HIVE),
                     'FLAT' => __('Flat', ENDER_HIVE)
                 ])
                 ->set_width(50),
             Field::make('checkbox', 'enable-ipv6', __('Enable IPv6', ENDER_HIVE))
-                ->set_default_value(PocketMineConfig::defaultServerProperties()['enable-ipv6'])
+                ->set_default_value(PocketMineMP::defaultServerProperties()['enable-ipv6'])
                 ->set_width(50),
             Field::make('checkbox', 'white-list', __('White List', ENDER_HIVE))
-                ->set_default_value(PocketMineConfig::defaultServerProperties()['white-list'])
+                ->set_default_value(PocketMineMP::defaultServerProperties()['white-list'])
                 ->set_width(50),
             Field::make('text', 'max-players', __('Max Players', ENDER_HIVE))
-                ->set_default_value(PocketMineConfig::defaultServerProperties()['max-players'])
+                ->set_default_value(PocketMineMP::defaultServerProperties()['max-players'])
                 ->set_attribute('type', 'number')
                 ->set_width(50),
             Field::make('text', 'view-distance', __('View Distance', ENDER_HIVE))
-                ->set_default_value(PocketMineConfig::defaultServerProperties()['view-distance'])
+                ->set_default_value(PocketMineMP::defaultServerProperties()['view-distance'])
                 ->set_attribute('type', 'number')
                 ->set_width(50),
             Field::make('checkbox', 'enable-query', __('Enable Query', ENDER_HIVE))
-                ->set_default_value(PocketMineConfig::defaultServerProperties()['enable-query'])
+                ->set_default_value(PocketMineMP::defaultServerProperties()['enable-query'])
                 ->set_width(50),
             Field::make('checkbox', 'auto-save', __('Auto Save', ENDER_HIVE))
-                ->set_default_value(PocketMineConfig::defaultServerProperties()['auto-save'])
+                ->set_default_value(PocketMineMP::defaultServerProperties()['auto-save'])
                 ->set_width(50),
             Field::make('checkbox', 'xbox-auth', __('Xbox Authentication', ENDER_HIVE))
-                ->set_default_value(PocketMineConfig::defaultServerProperties()['xbox-auth'])
+                ->set_default_value(PocketMineMP::defaultServerProperties()['xbox-auth'])
                 ->set_width(50),
         ];
+    }
+
+    /**
+     * Hooks on post meta save via Carbon Fields.
+     * 
+     *
+     * @param mixed $post_id
+     * @return void
+     */
+    public function writeServerProperties(int $post_id): void
+    {
+        // Setup server.
+        $server = new PocketMineMP($post_id);
+        $update = $server::getServerProperties($post_id);
+
+        // Setup file.
+        $filename = 'server.properties';
+        $path = $server->getPath($filename);
+
+        // Get current file
+        $current_file = file_get_contents($path);
+
+        // Compare files and update if needed.
+        if (strcmp(Utils::removeFirstTwoLines($current_file), Utils::removeFirstTwoLines($update))) {
+            $server->stopWait();
+            file_put_contents($path, $update);
+            $server->start();
+        }
     }
 
     public function uploadMimeTypes($wp_get_mime_types)
