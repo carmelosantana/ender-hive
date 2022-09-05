@@ -5,11 +5,17 @@ declare(strict_types=1);
 namespace CarmeloSantana\EnderHive\Options;
 
 use Carbon_Fields\Field\Field;
-use CarmeloSantana\EnderHive\Instance;
-use CarmeloSantana\EnderHive\Config\Defaults;
+use CarmeloSantana\EnderHive\Host\PocketMineMP\Server as PocketMineMP;
+use CarmeloSantana\EnderHive\Host\Server;
 
 class FileDatastore extends \Carbon_Fields\Datastore\Datastore
 {
+	public function fileInit(Field $field): void
+	{
+		$this->file = PocketMineMP::files()[$field->get_base_name()];
+		$this->file_path = Server::getInstancePath($this->object_id, $this->file);
+	}
+
 	/**
 	 * Initialization tasks for concrete datastores.
 	 **/
@@ -18,40 +24,49 @@ class FileDatastore extends \Carbon_Fields\Datastore\Datastore
 	}
 
 	/**
-	 * Get a raw database query results array for a field
+	 * Get file contents of the given field.
 	 *
 	 * @param Field $field The field to retrieve value for.
-	 * @param array $storage_key_patterns
-	 * @return \stdClass[] Array of {key, value} objects
+	 * @return string Config file contents.
 	 */
-	public function load(Field $field)
+	public function load(Field $field): string
 	{
-		if (isset(Defaults::files()[$field->get_base_name()])) {
-			$file = Defaults::files()[$field->get_base_name()];
-			$file_path = Instance::getConfigPath($this->object_id, $file);
-
-			if (file_exists($file_path)) {
-				$content = file_get_contents($file_path);
-				return $content;
+		if (PocketMineMP::files()[$field->get_base_name()]) {
+			$this->fileInit($field);
+			if (file_exists($this->file_path)) {
+				return file_get_contents($this->file_path);
 			}
 		}
+		return $field->get_default_value();
 	}
 
-	public function save(Field $field)
+	/**
+	 * Replace file contents of the given field.
+	 *
+	 * @param Field $field The field to retrieve value for.
+	 * @return int File size.
+	 */
+	public function save(Field $field): int
 	{
-		if (isset(Defaults::files()[$field->get_base_name()])) {
-			$file = Defaults::files()[$field->get_base_name()];
-			$file_path = Instance::getConfigPath($this->object_id, $file);
-
-			ray($field);
-			if (file_exists($file_path)) {
-				return file_put_contents($file_path, $field->get_value());
+		if (PocketMineMP::files()[$field->get_base_name()]) {
+			$this->fileInit($field);
+			if (file_exists($this->file_path)) {
+				return file_put_contents($this->file_path, $field->get_full_value()[0]['value']);
 			}
 		}
+
+		// Noting was written.
+		return 0;
 	}
 
-	public function delete(Field $field)
+	/**
+	 * Empty value triggers delete updates file with empty value.
+	 *
+	 * @param Field $field The field to retrieve value for.
+	 * @return int File size.
+	 */
+	public function delete(Field $field): int
 	{
-		ray($this);
+		return $this->save($field);
 	}
 }

@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
-namespace CarmeloSantana\EnderHive;
+namespace CarmeloSantana\EnderHive\Tools;
+
+use CarmeloSantana\EnderHive\Host\Server;
 
 class Network
 {
@@ -16,7 +18,6 @@ class Network
     {
         if (!isset($this->available_ports)) {
             $this->available_ports = array_diff($this->buildPortPool(), $this->buildActivePorts());
-            ray($this->available_ports)->label('Available Ports');
         }
 
         return $this->available_ports;
@@ -26,9 +27,14 @@ class Network
     {
         $ports = [];
 
+        // Remove draft and trash from query results.
+        $post_statuses = array_diff(get_post_stati(), ['draft', 'trash']);
+
+        // Get all servers.
         $query = new \WP_Query([
             'post_type' => 'instance',
-            'post_status' => get_post_stati(),
+            'post_status' => $post_statuses,
+            'post__not_in' => [($this->post_id ?? 0)],
         ]);
 
         // Loop through all instances. Add IP4 to list, check if IP6 is enabled, if so add port.
@@ -47,7 +53,7 @@ class Network
     public function buildPortPool(): array
     {
         $ports = [];
-        $ranges = Options::get('available_ports');
+        $ranges = carbon_get_theme_option('available_ports');
 
         foreach ($ranges as $port_range) {
             // Skip if we're out of range
@@ -68,11 +74,15 @@ class Network
         return $ports;
     }
 
-    public function requestPort(): int
+    public function requestPort(int $post_id = 0): int
     {
+        if ($post_id > 0) {
+            $this->post_id = $post_id;
+        }
+
         $this->getAvailablePorts();
 
-        switch (Options::get('port_assignment')) {
+        switch (carbon_get_theme_option('port_assignment')) {
             case 'random':
                 $key = array_rand($this->available_ports);
                 $port = $this->available_ports[$key];
@@ -85,16 +95,6 @@ class Network
         }
 
         return $port;
-    }
-
-    public static function getHostname()
-    {
-        return gethostname();
-    }
-
-    public static function getIp()
-    {
-        return gethostbyname(gethostname());
     }
 
     public static function isPortFree(int $port, string $host = '127.0.0.1'): bool

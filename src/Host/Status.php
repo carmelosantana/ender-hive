@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace CarmeloSantana\EnderHive;
+namespace CarmeloSantana\EnderHive\Host;
 
 class Status
 {

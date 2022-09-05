@@ -4,17 +4,15 @@ declare(strict_types=1);
 
 namespace CarmeloSantana\EnderHive\API;
 
-use CarmeloSantana\EnderHive\Jargon;
-use CarmeloSantana\EnderHive\Server;
-use CarmeloSantana\EnderHive\Status;
+use CarmeloSantana\EnderHive\Host\Server;
+use CarmeloSantana\EnderHive\Host\Status;
 use \stdClass;
-use \WP_Error;
 
 class Instance extends Base
 {
     public function __construct()
     {
-        $this->resource_name = Jargon::INSTANCES;
+        $this->resource_name = 'instances';
     }
 
     // Register our routes.

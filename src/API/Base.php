@@ -4,22 +4,21 @@ declare(strict_types=1);
 
 namespace CarmeloSantana\EnderHive\API;
 
-use CarmeloSantana\EnderHive\Jargon;
-use CarmeloSantana\EnderHive\Permissions;
-use CarmeloSantana\EnderHive\Status;
+use CarmeloSantana\EnderHive\Host\Status;
+use CarmeloSantana\EnderHive\User\Permissions;
 use \WP_Error;
 use \WP_HTTP_Response;
 use \WP_REST_Response;
 
-class Base
+abstract class Base
 {
-    public string $namespace = '/ender-hive/v1';
+    public string $namespace = '/' . ENDER_HIVE . '/v1';
 
-    public $rest_forbidden = Jargon::ERROR_FORBIDDEN;
+    public $rest_forbidden = Status::FORBIDDEN;
 
-    private const PERMISSION_READ = 'read';
+    public const PERMISSION_READ = 'read';
 
-    private const PERMISSION_WRITE = 'edit_posts';
+    public const PERMISSION_WRITE = 'edit_posts';
 
     // Here initialize our namespace and resource name.
     public function __construct()

@@ -4,37 +4,91 @@ declare(strict_types=1);
 
 namespace CarmeloSantana\EnderHive\Host;
 
-use CarmeloSantana\EnderHive\Status;
-use Symfony\Component\Process\Exception\ProcessFailedException;
-use Symfony\Component\Process\Process;
-
-abstract class Host
+interface Host
 {
-    public function exec(array $command): int
-    {
-        $process = new Process($command);
+    /**
+     * Host wrapper for the server binary or the host container.
+     *
+     * @param  mixed $post_id Instance post ID of the server.
+     * @return void
+     */
+    public function __construct(int $post_id);
 
-        try {
-            $process->mustRun();
+    /**
+     * Retrieve IPv4 port.
+     *
+     * @return int
+     */
+    public function getPortIp4(): int;
 
-            $log = $process->getOutput();
-            $status = Status::ACCEPTED;
-        } catch (ProcessFailedException $exception) {
-            $log = $exception->getMessage();
-            $status = Status::INTERNAL_SERVER_ERROR;
-        }
+    /**
+     * Retrieve IPv6 port.
+     *
+     * @return int
+     */
+    public function getPortIp6(): int;
+    
+    /**
+     * Retrieves current status.
+     *
+     * @return int
+     */
+    public function getStatus(): int;
 
-        ray($command)->label('Process() $command');
-        ray($log)->label('Process() $log');
+    /**
+     * Install and start server.
+     *
+     * @return int Status code.
+     */
+    public function install(): int;
 
-        return $status;
-    }
+    /**
+     * Checks if IPv6 is enabled.
+     *
+     * @return int Status code.
+     */
+    public function isIp6Enabled(): bool;
 
-    public function start(): int
-    {
-    }
+    /**
+     * Checks if server is running.
+     *
+     * @return bool True if server is running, false otherwise.
+     */
+    public function isRunning(): bool;
 
-    public function stop(): int
-    {
-    }
+    /**
+     * Restart server.
+     *
+     * @return int Status code.
+     */
+    public function restart(): int;
+
+    /**
+     * Start server.
+     *
+     * @return int Status code.
+     */
+    public function start(): int;
+
+    /**
+     * Stop server.
+     *
+     * @return int Status code.
+     */
+    public function stop(): int;
+
+    /**
+     * Waits till the server is fully stopped before returning.
+     *
+     * @return int Status code.
+     */
+    public function stopWait(): int;
+
+    /**
+     * Performs all processes necessary to update the server status.
+     * Hydrates the host with the latest status.
+     *
+     * @return void
+     */
+    public function updateStatus(): void;
 }
