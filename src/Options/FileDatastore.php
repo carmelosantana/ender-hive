@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace CarmeloSantana\EnderHive\Options;
 
 use Carbon_Fields\Field\Field;
-use CarmeloSantana\EnderHive\Config\Defaults;
+use CarmeloSantana\EnderHive\Host\PocketMineMP\Server as PocketMineMP;
 use CarmeloSantana\EnderHive\Host\Server;
 
 class FileDatastore extends \Carbon_Fields\Datastore\Datastore
 {
 	public function fileInit(Field $field): void
 	{
-		$this->file = Defaults::files()[$field->get_base_name()];
+		$this->file = PocketMineMP::files()[$field->get_base_name()];
 		$this->file_path = Server::getInstancePath($this->object_id, $this->file);
 	}
 
@@ -31,12 +31,13 @@ class FileDatastore extends \Carbon_Fields\Datastore\Datastore
 	 */
 	public function load(Field $field): string
 	{
-		if (Defaults::files()[$field->get_base_name()]) {
+		if (PocketMineMP::files()[$field->get_base_name()]) {
 			$this->fileInit($field);
 			if (file_exists($this->file_path)) {
 				return file_get_contents($this->file_path);
 			}
 		}
+		return $field->get_default_value();
 	}
 
 	/**
@@ -47,12 +48,15 @@ class FileDatastore extends \Carbon_Fields\Datastore\Datastore
 	 */
 	public function save(Field $field): int
 	{
-		if (Defaults::files()[$field->get_base_name()]) {
+		if (PocketMineMP::files()[$field->get_base_name()]) {
 			$this->fileInit($field);
 			if (file_exists($this->file_path)) {
 				return file_put_contents($this->file_path, $field->get_full_value()[0]['value']);
 			}
 		}
+
+		// Noting was written.
+		return 0;
 	}
 
 	/**
