@@ -36,6 +36,7 @@ class Actions
         }
 
         // TODO: API may require another check hidden_post_status is for admin edit.php.
+        $status = get_post_meta($post_id, '_install_status', true);
         if (isset($_POST['hidden_post_status']) and $_POST['hidden_post_status'] == 'draft' and !$status) {
             // Schedule the event
             $args = [
