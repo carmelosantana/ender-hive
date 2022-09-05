@@ -16,7 +16,7 @@ class Permissions
     /**
      * Provides status code for authorization.
      *
-     * @return int
+     * @return int Status code.
      */
     public static function authorizationStatusCode(): int
     {
