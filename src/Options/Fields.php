@@ -136,12 +136,6 @@ class Fields
     {
         return [
             Field::make('textarea', 'plugin_list_yml', __('Plugins', ENDER_HIVE))
-                ->set_conditional_logic([
-                    [
-                        'field' => 'server_type_pmmp',
-                        'value' => true,
-                    ],
-                ])
                 ->set_datastore(new FileDatastore())
                 ->set_rows(10)
                 ->set_help_text(__('Allows you to control which plugins are loaded on your server.', ENDER_HIVE)),
