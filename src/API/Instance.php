@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace CarmeloSantana\EnderHive\API;
 
-use CarmeloSantana\EnderHive\Const\Status;
 use CarmeloSantana\EnderHive\Host\Server;
+use CarmeloSantana\EnderHive\Host\Status;
 use \stdClass;
 
 class Instance extends Base
@@ -216,7 +216,6 @@ class Instance extends Base
         switch ($status) {
             case Status::FOUND:
                 $status = $server->start();
-                ray($status);
                 break;
         }
 
