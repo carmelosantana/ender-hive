@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace CarmeloSantana\EnderHive\API;
 
-use CarmeloSantana\EnderHive\Const\Permissions;
-use CarmeloSantana\EnderHive\Const\Status;
+use CarmeloSantana\EnderHive\Host\Status;
+use CarmeloSantana\EnderHive\User\Permissions;
 use \WP_Error;
 use \WP_HTTP_Response;
 use \WP_REST_Response;
 
-class Base
+abstract class Base
 {
-    public string $namespace = '/ender-hive/v1';
+    public string $namespace = '/' . ENDER_HIVE . '/v1';
 
     public $rest_forbidden = Status::FORBIDDEN;
 
