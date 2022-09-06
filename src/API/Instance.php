@@ -18,6 +18,9 @@ class Instance extends Base
     // Register our routes.
     public function register_routes()
     {
+        $id = '/(?P<id>[\d]+)';
+        $resource = '/' . $this->resource_name;
+
         register_rest_route($this->namespace, '/' . $this->resource_name, [
             // Here we register the readable endpoint for collections.
             [
@@ -30,7 +33,7 @@ class Instance extends Base
                 $this, 'get_item_schema'
             ],
         ]);
-        register_rest_route($this->namespace, '/' . $this->resource_name . '/(?P<id>[\d]+)', array(
+        register_rest_route($this->namespace, $resource . $id, array(
             // Notice how we are registering multiple endpoints the 'schema' equates to an OPTIONS request.
             [
                 'methods'   => 'GET',
@@ -40,7 +43,32 @@ class Instance extends Base
             // Register our schema callback.
             'schema' => [$this, 'get_item_schema'],
         ));
-        register_rest_route($this->namespace, '/' . $this->resource_name . '/(?P<id>[\d]+)/start', array(
+        register_rest_route($this->namespace, $resource . $id . '/logs', array(
+            [
+                'methods'   => 'GET',
+                'callback'  => [$this, 'logs'],
+                'permission_callback' => [$this, 'get_item_permissions_check'],
+                'args' => [
+                    'page' => [
+                        'validate_callback' => function ($param, $request, $key) {
+                            return is_numeric($param);
+                        }
+                    ],
+                    'page_order' => [
+                        'validate_callback' => function ($param, $request, $key) {
+                            return is_string($param) and in_array($param, ['asc', 'desc']);
+                        }
+                    ],
+                    'page_size' => [
+                        'validate_callback' => function ($param, $request, $key) {
+                            return is_numeric($param);
+                        }
+                    ],
+                ]
+            ],
+            'schema' => [$this, 'get_log_schema'],
+        ));
+        register_rest_route($this->namespace, $resource . $id . '/start', array(
             [
                 'methods'   => 'POST',
                 'callback'  => [$this, 'start'],
@@ -48,7 +76,7 @@ class Instance extends Base
             ],
             'schema' => [$this, 'get_status_schema'],
         ));
-        register_rest_route($this->namespace, '/' . $this->resource_name . '/(?P<id>[\d]+)/stop', array(
+        register_rest_route($this->namespace, $resource . $id . '/stop', array(
             [
                 'methods'   => 'POST',
                 'callback'  => [$this, 'stop'],
@@ -161,6 +189,43 @@ class Instance extends Base
         return $this->schema;
     }
 
+    public function get_log_schema()
+    {
+        if (isset($this->schema)) {
+            return $this->schema;
+        }
+
+        $this->schema = array(
+            '$schema' => 'http://json-schema.org/draft-04/schema#',
+            'title' => 'post',
+            'type' => 'object',
+            'properties' => array(
+                'messages' => [
+                    'description' => esc_html__('Log messages.', ENDER_HIVE),
+                    'type' => 'array',
+                    'readonly' => true,
+                ],
+                'page' => [
+                    'description' => esc_html__('Current log page.', ENDER_HIVE),
+                    'type' => 'integer',
+                    'readonly' => true,
+                ],
+                'pages' => [
+                    'description' => esc_html__('Total pages available.', ENDER_HIVE),
+                    'type' => 'integer',
+                    'readonly' => true,
+                ],
+                'total' => [
+                    'description' => esc_html__('Total log entries.', ENDER_HIVE),
+                    'type' => 'integer',
+                    'readonly' => true,
+                ],
+            ),
+        );
+
+        return $this->schema;
+    }
+
     public function get_status_schema()
     {
         if (isset($this->schema)) {
@@ -182,6 +247,64 @@ class Instance extends Base
         );
 
         return $this->schema;
+    }
+
+    public function initServer($request)
+    {
+        $id = (int) $request['id'];
+        $this->request = $request;
+        $this->server = new Server($id);
+    }
+
+    /**
+     * Logs are displayed in chunks from newest to oldest.
+     *
+     * @param array $request
+     * @return void
+     */
+    public function logs(\WP_REST_Request $request)
+    {
+        $this->initServer($request);
+
+        // Get the log
+        $messages = $this->server->logs();
+
+        // Start with reversed array for newest chunk first
+        $messages = array_reverse($messages);
+
+        // Limit output to $request['page_size'] lines
+        $page_size = (int) ($request['page_size'] ?? 100);
+
+        // Setup pages
+        $pages = array_chunk($messages, $page_size);
+
+        // We don't want to request more pages than we have
+        $page = (int) ($request['page'] ?? 0);
+        if ($page >= count($pages)) {
+            $page = array_key_last($pages);
+        } elseif ($page <= 0) {
+            $page = 0;
+        } else {
+            $page = (int) $page - 1;
+        }
+
+        // Page order
+        $page_order = $request['page_order'] ?? 'desc';
+        switch ($page_order) {
+            case 'asc':
+                $pages[$page] = array_reverse($pages[$page]);
+                break;
+        }
+
+        // Start output
+        $output = [
+            'messages' => $pages[$page],
+            'page' => $page + 1,
+            'pages' => count($pages),
+            'total' => count($messages),
+        ];
+
+        return $this->rest_ensure_response($output, $this->server->getStatus());
     }
 
     /**
@@ -209,11 +332,9 @@ class Instance extends Base
 
     public function start($request)
     {
-        $id = (int) $request['id'];
-        $server = new Server($id);
-        $status = $server->getStatus();
+        $this->initServer($request);
 
-        switch ($status) {
+        switch ($this->server->getStatus()) {
             case Status::FOUND:
                 $status = $server->start();
                 break;
@@ -226,11 +347,9 @@ class Instance extends Base
 
     public function stop($request)
     {
-        $id = (int) $request['id'];
-        $server = new Server($id);
-        $status = $server->getStatus();
+        $this->initServer($request);
 
-        switch ($status) {
+        switch ($this->server->getStatus()) {
             case Status::OK:
             case Status::FOUND:
                 $status = $server->stop();
