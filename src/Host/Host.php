@@ -55,6 +55,13 @@ interface Host
      * @return bool True if server is running, false otherwise.
      */
     public function isRunning(): bool;
+    
+    /**
+     * Returns current server log file as an array.
+     *
+     * @return array
+     */
+    public function logs(): array;
 
     /**
      * Restart server.

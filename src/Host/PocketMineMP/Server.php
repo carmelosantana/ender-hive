@@ -15,6 +15,8 @@ class Server extends Base
 
     public const INSTALL_FILE = 'install.sh';
 
+    public const LOG_FILE = 'server.log';
+
     public const LOCK_FILE = 'server.lock';
 
     public function assignPorts(): void
@@ -124,6 +126,18 @@ class Server extends Base
         }
 
         return false;
+    }
+    
+    /**
+     * Returns current server log file as an array.
+     *
+     * @return array Array of log lines.
+     */
+    public function logs(): array
+    {
+        $log = trim(file_get_contents($this->getPath(self::LOG_FILE)));
+        $log = explode(PHP_EOL, $log);
+        return $log;
     }
 
     public function removeLockFile(): void
