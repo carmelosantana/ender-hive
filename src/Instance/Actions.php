@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace CarmeloSantana\EnderHive\Instance;
 
 use CarmeloSantana\EnderHive\Host\Server;
+use CarmeloSantana\EnderHive\Host\Status;
 
 class Actions
 {
@@ -12,7 +13,9 @@ class Actions
     {
         add_action('save_post_instance', [$this, 'create'], 10, 2);
         add_action('before_delete_post', [$this, 'delete']);
+        add_action('init', [$this, 'scheduleActions']);
         add_action('wp_trash_post', [$this, 'trash']);
+        add_action('Instance\autorestart', [$this, 'autoRestart']);
         add_action('Instance\install', [$this, 'install']);
     }
 
@@ -42,7 +45,7 @@ class Actions
             $args = [
                 $post_id,
             ];
-            as_schedule_single_action(time(), 'Instance\install', $args);
+            as_enqueue_async_action('Instance\install', $args);
         }
     }
 
@@ -69,6 +72,14 @@ class Actions
         }
     }
 
+
+    public function scheduleActions()
+    {
+        if (!as_has_scheduled_action('Instance\autorestart')) {
+            as_schedule_recurring_action(time(), 60, 'Instance\autorestart');
+        }
+    }
+
     /**
      * Stops server in preparation for file removal.
      *
@@ -79,6 +90,40 @@ class Actions
     {
         $this->server = new Server($post_id);
         $this->server->stop();
+    }
+
+    /**
+     * Restart server if it was last known as running but no longer online.
+     *
+     * @param int $post_id
+     * @return void
+     */
+    public static function autoRestart(): void
+    {
+        // Use WP_Query to get all instances
+        $query = new \WP_Query([
+            'post_type' => 'instance',
+            'post_status' => 'publish',
+            'posts_per_page' => -1,
+            'meta_query' => [
+                [
+                    'key' => '_autorestart',
+                ],
+            ],
+
+        ]);
+
+        if ($query->have_posts()) {
+            while ($query->have_posts()) {
+                $query->the_post();
+                $post_id = get_the_ID();
+                $server = new Server($post_id);
+                if (!$server->isRunning()) {
+                    $status = $server->start();
+                    ray($post_id)->label('Autorestart')->color('pink');
+                }
+            }
+        }
     }
 
     /**
