@@ -72,8 +72,12 @@ class Actions
         }
     }
 
-
-    public function scheduleActions()
+    /**
+     * Handles action scheduling on init.
+     *
+     * @return void
+     */
+    public function scheduleActions(): void
     {
         if (!as_has_scheduled_action('Instance\autorestart')) {
             as_schedule_recurring_action(time(), 60, 'Instance\autorestart');
@@ -107,7 +111,8 @@ class Actions
             'posts_per_page' => -1,
             'meta_query' => [
                 [
-                    'key' => '_autorestart',
+                    'key' => 'autorestart',
+                    'value' => 'yes',
                 ],
             ],
 
@@ -116,11 +121,9 @@ class Actions
         if ($query->have_posts()) {
             while ($query->have_posts()) {
                 $query->the_post();
-                $post_id = get_the_ID();
-                $server = new Server($post_id);
-                if (!$server->isRunning()) {
-                    $status = $server->start();
-                    ray($post_id)->label('Autorestart')->color('pink');
+                $server = new Server(get_the_ID());
+                if (!$server->isRunning() and $server->getLastKnownState() == Status::OK) {
+                    $server->start();
                 }
             }
         }
