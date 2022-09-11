@@ -10,43 +10,36 @@ use \stdClass;
 
 class Instance extends Base
 {
-    public function __construct()
-    {
-        $this->resource_name = 'instances';
-    }
+    public const JSON_DRAFT_4 = 'http://json-schema.org/draft-04/schema#';
 
-    // Register our routes.
+    public const RESOURCE = 'instance';
+
+    public const RESOURCE_NAME = '/instances';
+
+    public const RESOURCE_ID = '/(?P<id>[\d]+)';
+
     public function register_routes()
     {
-        $id = '/(?P<id>[\d]+)';
-        $resource = '/' . $this->resource_name;
-
-        register_rest_route($this->namespace, '/' . $this->resource_name, [
-            // Here we register the readable endpoint for collections.
+        register_rest_route($this->namespace, self::RESOURCE_NAME, [
             [
                 'methods'   => 'GET',
                 'callback'  => [$this, 'get_items'],
                 'permission_callback' => [$this, 'get_items_permissions_check'],
             ],
-            // Register our schema callback.
-            'schema' => [
-                $this, 'get_item_schema'
-            ],
+            'schema' => [$this, 'get_item_schema'],
         ]);
-        register_rest_route($this->namespace, $resource . $id, array(
-            // Notice how we are registering multiple endpoints the 'schema' equates to an OPTIONS request.
+        register_rest_route($this->namespace, self::RESOURCE_NAME . self::RESOURCE_ID, [
             [
                 'methods'   => 'GET',
                 'callback'  => [$this, 'get_item'],
                 'permission_callback' => [$this, 'get_item_permissions_check'],
             ],
-            // Register our schema callback.
             'schema' => [$this, 'get_item_schema'],
-        ));
-        register_rest_route($this->namespace, $resource . $id . '/logs', array(
+        ]);
+        register_rest_route($this->namespace, self::RESOURCE_NAME . self::RESOURCE_ID . '/logs', [
             [
                 'methods'   => 'GET',
-                'callback'  => [$this, 'logs'],
+                'callback'  => [$this, 'serverLogs'],
                 'permission_callback' => [$this, 'get_item_permissions_check'],
                 'args' => [
                     'page' => [
@@ -66,38 +59,52 @@ class Instance extends Base
                     ],
                 ]
             ],
-            'schema' => [$this, 'get_log_schema'],
-        ));
-        register_rest_route($this->namespace, $resource . $id . '/start', array(
+            'schema' => [$this, 'get_item_schema'],
+        ]);
+        register_rest_route($this->namespace, self::RESOURCE_NAME . self::RESOURCE_ID . '/restart', [
             [
                 'methods'   => 'POST',
-                'callback'  => [$this, 'start'],
+                'callback'  => [$this, 'serverRestart'],
                 'permission_callback' => [$this, 'get_item_permissions_check'],
             ],
-            'schema' => [$this, 'get_status_schema'],
-        ));
-        register_rest_route($this->namespace, $resource . $id . '/stop', array(
+            'schema' => [$this, 'get_item_schema'],
+        ]);
+        register_rest_route($this->namespace, self::RESOURCE_NAME . self::RESOURCE_ID . '/start', [
             [
                 'methods'   => 'POST',
-                'callback'  => [$this, 'stop'],
+                'callback'  => [$this, 'serverStart'],
                 'permission_callback' => [$this, 'get_item_permissions_check'],
             ],
-            'schema' => [$this, 'get_status_schema'],
-        ));
+            'schema' => [$this, 'get_item_schema'],
+        ]);
+        register_rest_route($this->namespace, self::RESOURCE_NAME . self::RESOURCE_ID . '/stop', [
+            [
+                'methods'   => 'POST',
+                'callback'  => [$this, 'serverStop'],
+                'permission_callback' => [$this, 'get_item_permissions_check'],
+            ],
+            'schema' => [$this, 'get_item_schema'],
+        ]);
     }
 
-    /**
-     * Grabs the five most recent posts and outputs them as a rest response.
-     *
-     * @param WP_REST_Request $request Current request.
-     */
-    public function get_items($request)
+    public function get_item(\WP_REST_Request $request)
+    {
+        if (!get_post_status((int) $request['id'])) {
+            return rest_ensure_response([]);
+        }
+
+        return $this->prepare_item_for_response($request);
+    }
+
+    public function get_items(\WP_REST_Request $request)
     {
         $args = [
+            'author' => get_current_user_id(),
+            'fields' => 'ids',
             'post_type' => 'instance',
             'posts_per_page' => -1,
-            'author' => get_current_user_id(),
         ];
+
         $posts = get_posts($args);
 
         $data = [];
@@ -107,153 +114,176 @@ class Instance extends Base
         }
 
         foreach ($posts as $post) {
-            $response = $this->prepare_item_for_response($post, $request);
+            $this->serverInit($post);
+            $response = $this->prepare_item_for_response($request);
             $data[] = $this->prepare_response_for_collection($response);
         }
 
-        // Return all of our comment response data.
         return rest_ensure_response($data);
     }
 
-    /**
-     * Grabs the five most recent posts and outputs them as a rest response.
-     *
-     * @param WP_REST_Request $request Current request.
-     */
-    public function get_item($request)
-    {
-        $id = (int) $request['id'];
-        $post = get_post($id);
-
-        if (empty($post)) {
-            return rest_ensure_response([]);
-        }
-
-        $response = $this->prepare_item_for_response($post, $request);
-
-        // Return all of our post response data.
-        return $response;
-    }
-
-    /**
-     * Get our sample schema for a post.
-     *
-     * @return array The sample schema for a post
-     */
-    public function get_item_schema()
-    {
-        if (isset($this->schema)) {
-            // Since WordPress 5.3, the schema can be cached in the $schema property.
-            return $this->schema;
-        }
-
-        $this->schema = array(
-            // This tells the spec of JSON Schema we are using which is draft 4.
-            '$schema'              => 'http://json-schema.org/draft-04/schema#',
-            // The title property marks the identity of the resource.
-            'title'                => 'post',
-            'type'                 => 'object',
-            // In JSON Schema you can specify object properties in the properties attribute.
-            'properties'           => array(
-                'id' => array(
-                    'description'  => esc_html__('Unique identifier for the object.', ENDER_HIVE),
-                    'type'         => 'integer',
-                    'context'      => array('view', 'edit', 'embed'),
-                    'readonly'     => true,
-                ),
-                'title' => array(
-                    'description'  => esc_html__('The title of the object.', ENDER_HIVE),
-                    'type'         => 'string',
-                    'context'      => array('view', 'edit', 'embed'),
-                    'readonly'     => true,
-                ),
-                'server_status_code' => array(
-                    'description'  => esc_html__('The status of the instance.', ENDER_HIVE),
-                    'type'         => 'integer',
-                    'context'      => array('view', 'edit', 'embed'),
-                    'readonly'     => true,
-                ),
-                'server_properties' => array(
-                    'description'  => esc_html__('Server properties.', ENDER_HIVE),
-                    'type'         => 'object',
-                    'context'      => array('view', 'edit', 'embed'),
-                    'readonly'     => true,
-                ),
-                'content' => array(
-                    'description'  => esc_html__('The content for the object.', ENDER_HIVE),
-                    'type'         => 'string',
-                ),
-            ),
-        );
-
-        return $this->schema;
-    }
-
-    public function get_log_schema()
+    public function get_item_schema(\WP_REST_Request $request)
     {
         if (isset($this->schema)) {
             return $this->schema;
         }
 
-        $this->schema = array(
-            '$schema' => 'http://json-schema.org/draft-04/schema#',
-            'title' => 'post',
-            'type' => 'object',
-            'properties' => array(
-                'messages' => [
-                    'description' => esc_html__('Log messages.', ENDER_HIVE),
-                    'type' => 'array',
-                    'readonly' => true,
-                ],
-                'page' => [
-                    'description' => esc_html__('Current log page.', ENDER_HIVE),
-                    'type' => 'integer',
-                    'readonly' => true,
-                ],
-                'pages' => [
-                    'description' => esc_html__('Total pages available.', ENDER_HIVE),
-                    'type' => 'integer',
-                    'readonly' => true,
-                ],
-                'total' => [
-                    'description' => esc_html__('Total log entries.', ENDER_HIVE),
-                    'type' => 'integer',
-                    'readonly' => true,
-                ],
-            ),
-        );
+        switch ($request->get_attributes()['callback'][1]) {
+            case 'get_item':
+                $this->schema = array(
+                    '$schema' => self::JSON_DRAFT_4,
+                    'title' => self::RESOURCE,
+                    'type' => 'object',
+                    'properties' => [
+                        'id' => Schema::instanceId(),
+                        'title' => Schema::instanceTitle(),
+                        'status_code' => Schema::serverStatusCode(),
+                        'query' => Schema::serverQuery(),
+                        'properties' => Schema::serverProperties(),
+                        'settings' => Schema::serverSettings(),
+                        'log_messages' => Schema::serverLogs(),
+                        'last_modified' => Schema::lastModified(),
+                        'last_modified_gmt' => Schema::lastModifiedGmt(),
+                        '_links' => Schema::responseLinks(),
+                    ],
+                );
+                break;
 
-        return $this->schema;
-    }
+            case 'get_items':
+                $this->schema = array(
+                    '$schema' => self::JSON_DRAFT_4,
+                    'title' => self::RESOURCE,
+                    'type' => 'object',
+                    'properties' => [
+                        'id' => Schema::instanceId(),
+                        'title' => Schema::instanceTitle(),
+                        'status_code' => Schema::serverStatusCode(),
+                        'query' => Schema::serverQuery(),
+                        'settings' => Schema::serverSettings(),
+                        '_links' => Schema::responseLinks(),
+                    ],
+                );
+                break;
 
-    public function get_status_schema()
-    {
-        if (isset($this->schema)) {
-            // Since WordPress 5.3, the schema can be cached in the $schema property.
-            return $this->schema;
+            case 'serverLogs':
+                $this->schema = array(
+                    '$schema' => self::JSON_DRAFT_4,
+                    'title' => 'post',
+                    'type' => 'object',
+                    'properties' => array(
+                        'status_code' => Schema::serverStatusCode(),
+                        '_links' => Schema::responseLinks(),
+                    ),
+                );
+                break;
+
+            case 'serverRestart':
+            case 'serverStart':
+            case 'serverStop':
+                $this->schema = array(
+                    '$schema' => self::JSON_DRAFT_4,
+                    'title' => 'post',
+                    'type' => 'object',
+                    'properties' => array(
+                        'status_code' => Schema::serverStatusCode(),
+                        '_links' => Schema::responseLinks(),
+                    ),
+                );
+                break;
         }
 
-        $this->schema = array(
-            '$schema'              => 'http://json-schema.org/draft-04/schema#',
-            'title'                => 'post',
-            'type'                 => 'object',
-            'properties'           => array(
-                'status_code' => array(
-                    'description'  => esc_html__('The status of the instance.', ENDER_HIVE),
-                    'type'         => 'integer',
-                    'readonly'     => true,
-                ),
-            ),
-        );
-
         return $this->schema;
     }
 
-    public function initServer($request)
+    public function get_response_links()
     {
-        $id = (int) $request['id'];
-        $this->request = $request;
-        $this->server = new Server($id);
+        return [
+            'self' => [
+                [
+                    'href' => rest_url($this->namespace . self::RESOURCE_NAME . '/' . $this->server->getId() . ''),
+                ]
+            ],
+            'collection' => [
+                [
+                    'href' => rest_url($this->namespace . self::RESOURCE_NAME),
+                ]
+            ],
+            'logs' => [
+                [
+                    'href' => rest_url($this->namespace . self::RESOURCE_NAME . '/' . $this->server->getId() . '/logs'),
+                ]
+            ],
+            'start' => [
+                [
+                    'href' => rest_url($this->namespace . self::RESOURCE_NAME . '/' . $this->server->getId() . '/start'),
+                ]
+            ],
+            'stop' => [
+                [
+                    'href' => rest_url($this->namespace . self::RESOURCE_NAME . '/' . $this->server->getId() . '/stop'),
+                ]
+            ],
+        ];
+    }
+
+    public function prepare_item_for_response(\WP_REST_Request $request)
+    {
+        $post_data = [];
+
+        $schema = $this->get_item_schema($request);
+
+        // Setup server if not already done. 
+        if (!isset($this->server)) {
+            $this->serverInit($request['id']);
+        }
+
+        if (isset($schema['properties']['id'])) {
+            $post_data['id'] = (int) $this->server->getId();
+        }
+
+        if (isset($schema['properties']['logs'])) {
+            $logs = array_reverse($this->server->logs());
+            $post_data['logs'] = array_slice($logs, -10);
+        }
+
+        if (isset($schema['properties']['title'])) {
+            $post_data['title'] = $this->server->getPost()->post_title;
+        }
+
+        if (isset($schema['properties']['status_code'])) {
+            $post_data['status_code'] = $this->server->getStatus();
+        }
+
+        if (isset($schema['properties']['properties'])) {
+            $post_data['properties'] = $this->server->getServerProperties();
+        }
+
+        if (isset($schema['properties']['settings'])) {
+            $post_data['settings'] = $this->server->getServerSettings();
+        }
+
+        if (isset($schema['properties']['query'])) {
+            $post_data['query'] = $this->server->query();
+        }
+
+        if (isset($schema['properties']['last_modified'])) {
+            $post_data['last_modified'] = $this->server->getPost()->post_modified;
+        }
+
+        if (isset($schema['properties']['last_modified_gmt'])) {
+            $post_data['last_modified_gmt'] = $this->server->getPost()->post_modified_gmt;
+        }
+
+        if (isset($schema['properties']['_links'])) {
+            $post_data['_links'] = $this->get_response_links();
+        }
+
+        return rest_ensure_response($post_data);
+    }
+
+    public function serverInit(int|string $post_id)
+    {
+        $this->server = new Server((int) $post_id);
     }
 
     /**
@@ -262,9 +292,9 @@ class Instance extends Base
      * @param array $request
      * @return void
      */
-    public function logs(\WP_REST_Request $request)
+    public function serverLogs(\WP_REST_Request $request)
     {
-        $this->initServer($request);
+        $this->serverInit($request['id']);
 
         // Get the log
         $messages = $this->server->logs();
@@ -307,57 +337,34 @@ class Instance extends Base
         return $this->rest_ensure_response($output, $this->server->getStatus());
     }
 
-    /**
-     * Matches the post data to the schema we want.
-     *
-     * @param WP_Post $post The comment object whose response is being prepared.
-     */
-    public function prepare_item_for_response($post, $request)
+    public function serverRestart(\WP_REST_Request $request)
     {
-        $post_data = [];
-
-        $schema = $this->get_item_schema($request);
-
-        // We are also renaming the fields to more understandable names.
-        if (isset($schema['properties']['id'])) {
-            $post_data['id'] = (int) $post->ID;
-        }
-
-        if (isset($schema['properties']['content'])) {
-            $post_data['content'] = apply_filters('the_content', $post->post_content, $post);
-        }
-
-        return rest_ensure_response($post_data);
-    }
-
-    public function start($request)
-    {
-        $this->initServer($request);
-
-        switch ($this->server->getStatus()) {
-            case Status::FOUND:
-                $status = $server->start();
-                break;
-        }
-
-        $output = new stdClass();
-
-        return $this->rest_ensure_response($output, $status);
-    }
-
-    public function stop($request)
-    {
-        $this->initServer($request);
+        $this->serverInit($request['id']);
 
         switch ($this->server->getStatus()) {
             case Status::OK:
-            case Status::FOUND:
-                $status = $server->stop();
+                $this->server->restart();
                 break;
         }
 
-        $output = new stdClass();
+        return $this->prepare_item_for_response($request);
+    }
 
-        return $this->rest_ensure_response($output, $status);
+    public function serverStart(\WP_REST_Request $request)
+    {
+        $this->serverInit($request['id']);
+
+        $this->server->start();
+
+        return $this->prepare_item_for_response($request);
+    }
+
+    public function serverStop(\WP_REST_Request $request)
+    {
+        $this->serverInit($request['id']);
+
+        $this->server->stop();
+
+        return $this->prepare_item_for_response($request);
     }
 }

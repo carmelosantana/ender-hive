@@ -31,7 +31,6 @@ class Fields
         add_action('carbon_fields_register_fields', [$this, 'metas']);
         add_action('carbon_fields_register_fields', [$this, 'options']);
         add_action('carbon_fields_post_meta_container_saved', [$this, 'writeServerProperties']);
-        add_filter('upload_mimes', [$this, 'uploadMimeTypes']);
     }
 
     public function banned(): array
@@ -61,9 +60,13 @@ class Fields
                     ->set_default_value('pocketmine-mp'),
             ]);
 
-        $this->container_metas = Container::make('post_meta', __('Ports', ENDER_HIVE))
+        $this->container_metas = Container::make('post_meta', __('System', ENDER_HIVE))
             ->set_context('side')
             ->add_fields([
+                Field::make('text', 'last_known_state', __('Last Known State', ENDER_HIVE))
+                    ->set_attribute('readOnly', true),
+                Field::make('checkbox', 'autorestart', __('Auto Restart', ENDER_HIVE))
+                    ->set_default_value(true),
                 Field::make('text', 'server-port', __('IP4', ENDER_HIVE))
                     ->set_attribute('readOnly', true)
                     ->set_width(50),
@@ -137,6 +140,7 @@ class Fields
         return [
             Field::make('textarea', 'plugin_list_yml', __('Plugins', ENDER_HIVE))
                 ->set_datastore(new FileDatastore())
+                ->set_default_value(PocketMineMP::getAsset('plugin_list.yml'))
                 ->set_rows(10)
                 ->set_help_text(__('Allows you to control which plugins are loaded on your server.', ENDER_HIVE)),
         ];
@@ -147,6 +151,7 @@ class Fields
         return [
             Field::make('textarea', 'pocketmine_yml', __('PocketMine Config', ENDER_HIVE))
                 ->set_datastore(new FileDatastore())
+                ->set_default_value(PocketMineMP::getAsset('pocketmine.yml'))
                 ->set_rows(10)
                 ->set_help_text(__('Main configuration file for PocketMine-MP.', ENDER_HIVE)),
         ];
@@ -241,30 +246,24 @@ class Fields
      * @param mixed $post_id
      * @return void
      */
-    public function writeServerProperties(int $post_id): void
+    public static function writeServerProperties(int $post_id): void
     {
         // Setup server.
         $server = new PocketMineMP($post_id);
-        $update = $server::getServerProperties($post_id);
+        $update = $server::prepServerProperties($post_id);
 
         // Setup file.
         $filename = 'server.properties';
         $path = $server->getPath($filename);
 
         // Get current file
-        $current_file = file_get_contents($path);
+        $current_file = file_exists($path) ? file_get_contents($path) : null;
 
         // Compare files and update if needed.
-        if (strcmp(Utils::removeFirstTwoLines($current_file), Utils::removeFirstTwoLines($update))) {
+        if ($current_file and strcmp(Utils::removeFirstTwoLines($current_file), Utils::removeFirstTwoLines($update))) {
             $server->stopWait();
             file_put_contents($path, $update);
             $server->start();
         }
-    }
-
-    public function uploadMimeTypes($wp_get_mime_types)
-    {
-        $wp_get_mime_types['phar'] = 'application/x-phar';
-        return $wp_get_mime_types;
     }
 }
