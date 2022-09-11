@@ -6,6 +6,7 @@ namespace CarmeloSantana\EnderHive\Host\PocketMineMP;
 
 use CarmeloSantana\EnderHive\Host\Base;
 use CarmeloSantana\EnderHive\Host\Status;
+use CarmeloSantana\EnderHive\Options\Fields;
 use CarmeloSantana\EnderHive\Tools\Network;
 use CarmeloSantana\EnderHive\Tools\Utils;
 
@@ -25,8 +26,8 @@ class Server extends Base
         $this->network = new Network();
 
         // Set ports to meta options.
-        carbon_set_post_meta($this->post_id, 'server-port', $this->network->requestPort($this->post_id));
-        carbon_set_post_meta($this->post_id, 'server-portv6', $this->network->requestPort($this->post_id));
+        update_post_meta($this->post_id, '_server-port', $this->network->requestPort($this->post_id));
+        update_post_meta($this->post_id, '_server-portv6', $this->network->requestPort($this->post_id));
     }
 
     public function command()
@@ -53,10 +54,10 @@ class Server extends Base
      *
      * @return int
      */
-    public function getServerLock(): int
+    public function getServerLock(): int|false
     {
         if (!file_exists($this->getLockFilePath())) {
-            return 0;
+            return false;
         } else {
             return (int) file_get_contents($this->getLockFilePath());
         }
@@ -105,11 +106,14 @@ class Server extends Base
         // TODO: Check if install.sh is successful.
         $this->command()->install($this->install_file);
 
+        // Create new configs.
+        $this->newFiles(self::files());
+
         // Assign ports.
         $this->assignPorts();
 
-        // Create new configs.
-        $this->newFiles(self::files());
+        // Update server.properties.
+        Fields::writeServerProperties($this->post_id);
 
         // We made it this far we must be done!
         update_post_meta($this->post_id, '_install_status', Status::OK);
@@ -120,14 +124,19 @@ class Server extends Base
 
     public function isRunning(): bool
     {
-        // TODO Add PID check.
-        if ($this->getServerLock() > 0) {
+        // check if we can query server
+        if (!empty($this->query())) {
             return true;
+        } else {
+            // server is not running, remove lock file
+            if (file_exists($this->getLockFilePath())) {
+                unlink($this->getLockFilePath());
+            }
         }
 
         return false;
     }
-    
+
     /**
      * Returns current server log file as an array.
      *
@@ -160,51 +169,51 @@ class Server extends Base
         switch (get_post_status($this->post->ID)) {
             case 'publish':
             case 'draft':
-                return $this->command()->start();
+                if (!$this->isRunning()) {
+                    $status = $this->command()->start();
+                } else {
+                    $status = Status::OK;
+                }
+                break;
+
+            default:
+                $status = Status::SERVICE_UNAVAILABLE;
                 break;
         }
-        return Status::NOT_FOUND;
+
+        $this->updateStatus($status);
+
+        return $this->getStatus();
     }
 
     public function stop(): int
     {
-        if (!$this->isRunning()) {
-            return Status::OK;
+        if ($this->isRunning()) {
+            $status = $this->command()->stop();
+        } else {
+            $status = Status::NO_CONTENT;
         }
 
-        $status = $this->command()->stop();
+        $this->updateStatus($status);
 
-        switch ($status) {
-            case Status::INTERNAL_SERVER_ERROR:
-                $this->removeLockFile();
-                break;
-        }
-
-        return $status;
+        return $this->getStatus();
     }
 
     public function stopWait(): int
     {
-        $this->stop();
+        $status = $this->stop();
 
         // Wait for the server to stop
         while ($this->isRunning()) {
             usleep(250000);
         }
 
+        $this->updateStatus(Status::NO_CONTENT);
+
         return $this->getStatus();
     }
 
-    public function updateStatus(int $status = 0): void
-    {
-        if ($status > 0) {
-            $this->status = $status;
-        } elseif ($this->isRunning()) {
-            $this->status = Status::OK;
-        }
-    }
-
-    public static function getServerProperties($post_id): string
+    public static function prepServerProperties($post_id): string
     {
         $properties = [];
 
@@ -280,7 +289,7 @@ class Server extends Base
             'server_properties' => [
                 'filename' => 'server',
                 'extension' => 'properties',
-                'callback' => [__CLASS__, 'getServerProperties'],
+                'callback' => [__CLASS__, 'prepServerProperties'],
             ],
             'white_list_txt' => [
                 'filename' => 'white-list',
