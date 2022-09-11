@@ -15,6 +15,20 @@ interface Host
     public function __construct(int $post_id);
 
     /**
+     * Access post ID initialized in constructor.
+     *
+     * @return int
+     */
+    public function getId(): int;
+
+    /**
+     * Get primary IP address of the host.
+     *
+     * @return string
+     */
+    public function getIp(): string;
+
+    /**
      * Retrieve IPv4 port.
      *
      * @return int
