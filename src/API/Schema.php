@@ -28,6 +28,24 @@ class Schema
         ];
     }
 
+    public static function lastModified(): array
+    {
+        return [
+            'description' => esc_html__('Server settings last modified date.', ENDER_HIVE),
+            'type' => 'string',
+            'readonly' => true,
+        ];
+    }
+
+    public static function lastModifiedGmt(): array
+    {
+        return [
+            'description' => esc_html__('Server settings last modified date in GMT.', ENDER_HIVE),
+            'type' => 'string',
+            'readonly' => true,
+        ];
+    }    
+
     public static function responsePage(): array
     {
         return [
@@ -76,12 +94,22 @@ class Schema
     public static function serverProperties(): array
     {
         return [
-            'description' => esc_html__('The properties of the instance.', ENDER_HIVE),
+            'description' => esc_html__('The properties of this server instance.', ENDER_HIVE),
             'type' => 'object',
             'context' => self::DEFAULT_CONTEXT,
             'readonly' => true,
         ];
     }
+
+    public static function serverSettings(): array
+    {
+        return [
+            'description' => esc_html__('The instance settings to manage this server.', ENDER_HIVE),
+            'type' => 'object',
+            'context' => self::DEFAULT_CONTEXT,
+            'readonly' => true,
+        ];
+    }    
 
     public static function serverQuery(): array
     {
