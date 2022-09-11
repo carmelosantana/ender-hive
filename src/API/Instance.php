@@ -6,7 +6,6 @@ namespace CarmeloSantana\EnderHive\API;
 
 use CarmeloSantana\EnderHive\Host\Server;
 use CarmeloSantana\EnderHive\Host\Status;
-use \stdClass;
 
 class Instance extends Base
 {
@@ -20,15 +19,15 @@ class Instance extends Base
 
     public function register_routes()
     {
-        register_rest_route($this->namespace, self::RESOURCE_NAME, [
+        register_rest_route(self::NAMESPACE, self::RESOURCE_NAME, [
             [
                 'methods'   => 'GET',
                 'callback'  => [$this, 'get_items'],
-                'permission_callback' => [$this, 'get_items_permissions_check'],
+                'permission_callback' => [$this, 'get_item_permissions_check'],
             ],
             'schema' => [$this, 'get_item_schema'],
         ]);
-        register_rest_route($this->namespace, self::RESOURCE_NAME . self::RESOURCE_ID, [
+        register_rest_route(self::NAMESPACE, self::RESOURCE_NAME . self::RESOURCE_ID, [
             [
                 'methods'   => 'GET',
                 'callback'  => [$this, 'get_item'],
@@ -36,7 +35,7 @@ class Instance extends Base
             ],
             'schema' => [$this, 'get_item_schema'],
         ]);
-        register_rest_route($this->namespace, self::RESOURCE_NAME . self::RESOURCE_ID . '/logs', [
+        register_rest_route(self::NAMESPACE, self::RESOURCE_NAME . self::RESOURCE_ID . '/logs', [
             [
                 'methods'   => 'GET',
                 'callback'  => [$this, 'serverLogs'],
@@ -61,27 +60,27 @@ class Instance extends Base
             ],
             'schema' => [$this, 'get_item_schema'],
         ]);
-        register_rest_route($this->namespace, self::RESOURCE_NAME . self::RESOURCE_ID . '/restart', [
+        register_rest_route(self::NAMESPACE, self::RESOURCE_NAME . self::RESOURCE_ID . '/restart', [
             [
                 'methods'   => 'POST',
                 'callback'  => [$this, 'serverRestart'],
-                'permission_callback' => [$this, 'get_item_permissions_check'],
+                'permission_callback' => [$this, 'update_item_permissions_check'],
             ],
             'schema' => [$this, 'get_item_schema'],
         ]);
-        register_rest_route($this->namespace, self::RESOURCE_NAME . self::RESOURCE_ID . '/start', [
+        register_rest_route(self::NAMESPACE, self::RESOURCE_NAME . self::RESOURCE_ID . '/start', [
             [
                 'methods'   => 'POST',
                 'callback'  => [$this, 'serverStart'],
-                'permission_callback' => [$this, 'get_item_permissions_check'],
+                'permission_callback' => [$this, 'update_item_permissions_check'],
             ],
             'schema' => [$this, 'get_item_schema'],
         ]);
-        register_rest_route($this->namespace, self::RESOURCE_NAME . self::RESOURCE_ID . '/stop', [
+        register_rest_route(self::NAMESPACE, self::RESOURCE_NAME . self::RESOURCE_ID . '/stop', [
             [
                 'methods'   => 'POST',
                 'callback'  => [$this, 'serverStop'],
-                'permission_callback' => [$this, 'get_item_permissions_check'],
+                'permission_callback' => [$this, 'update_item_permissions_check'],
             ],
             'schema' => [$this, 'get_item_schema'],
         ]);
@@ -200,27 +199,27 @@ class Instance extends Base
         return [
             'self' => [
                 [
-                    'href' => rest_url($this->namespace . self::RESOURCE_NAME . '/' . $this->server->getId() . ''),
+                    'href' => rest_url(self::NAMESPACE . self::RESOURCE_NAME . '/' . $this->server->getId() . ''),
                 ]
             ],
             'collection' => [
                 [
-                    'href' => rest_url($this->namespace . self::RESOURCE_NAME),
+                    'href' => rest_url(self::NAMESPACE . self::RESOURCE_NAME),
                 ]
             ],
             'logs' => [
                 [
-                    'href' => rest_url($this->namespace . self::RESOURCE_NAME . '/' . $this->server->getId() . '/logs'),
+                    'href' => rest_url(self::NAMESPACE . self::RESOURCE_NAME . '/' . $this->server->getId() . '/logs'),
                 ]
             ],
             'start' => [
                 [
-                    'href' => rest_url($this->namespace . self::RESOURCE_NAME . '/' . $this->server->getId() . '/start'),
+                    'href' => rest_url(self::NAMESPACE . self::RESOURCE_NAME . '/' . $this->server->getId() . '/start'),
                 ]
             ],
             'stop' => [
                 [
-                    'href' => rest_url($this->namespace . self::RESOURCE_NAME . '/' . $this->server->getId() . '/stop'),
+                    'href' => rest_url(self::NAMESPACE . self::RESOURCE_NAME . '/' . $this->server->getId() . '/stop'),
                 ]
             ],
         ];
@@ -334,9 +333,15 @@ class Instance extends Base
             'total' => count($messages),
         ];
 
-        return $this->rest_ensure_response($output, $this->server->getStatus());
+        return rest_ensure_response($output);
     }
 
+    /**
+     * Attempts to restart server if running.
+     *
+     * @param  mixed $request
+     * @return void
+     */
     public function serverRestart(\WP_REST_Request $request)
     {
         $this->serverInit($request['id']);
