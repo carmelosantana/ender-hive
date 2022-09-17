@@ -186,6 +186,20 @@ class Server extends Base
         return $this->getStatus();
     }
 
+    public function startWait(): int
+    {
+        $status = $this->start();
+
+        // Wait for the server to start
+        while (!$this->isRunning()) {
+            usleep(250000);
+        }
+
+        $this->updateStatus(Status::OK);
+
+        return $this->getStatus();
+    }    
+
     public function stop(): int
     {
         if ($this->isRunning()) {
