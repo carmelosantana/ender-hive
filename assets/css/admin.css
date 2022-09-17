@@ -1,3 +1,11 @@
+/*Hide hidden fields*/
 .cf-container .cf-container__fields .cf-hidden {
     display: none;
+}
+/*edit.php Input styling*/
+.column-ports INPUT {
+    width: 70px;
+    margin-bottom: 0.5em;
+    margin-left: 5%;
+    text-align: right;
 }
