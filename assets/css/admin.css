@@ -7,5 +7,10 @@
     width: 70px;
     margin-bottom: 0.5em;
     margin-left: 5%;
+    0.5em;
     text-align: right;
+}
+/*Dashicons*/
+.dashicons.status-200 {
+    color: #29C457;
 }
