@@ -3,7 +3,7 @@
 Plugin Name: Ender Hive
 Plugin URI: https://enderhive.com/
 Description: Minecraft server manager.
-Version: 0.1.0-alpha-10
+Version: 0.1.0-alpha.11
 Author: Carmelo Santana
 Author URI: https://carmelosantana.com/
 License: GNU General Public License v2 or later

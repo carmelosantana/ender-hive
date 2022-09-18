@@ -1,3 +1,4 @@
-composer.phar
+_releases/
 vendor/
+composer.phar
 .DS_Store
