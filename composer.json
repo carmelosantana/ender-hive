@@ -8,7 +8,7 @@
             "name": "Carmelo Santana",
             "email": "me@carmelosantana.com"
         }
-    ],    
+    ],
     "autoload": {
         "psr-4": {
             "CarmeloSantana\\EnderHive\\": "src/"
@@ -26,5 +26,13 @@
         "s1lentium/iptools": "^1.1",
         "kassner/log-parser": "~2.0",
         "spatie/ray": "^1.35"
+    },
+    "require-dev": {
+        "bszyk/zip-wp": "^0.1.0"
+    },
+    "scripts": {
+        "zip-wp": [
+            "ZipWP\\ZipWP::run_script"
+        ]
     }
 }

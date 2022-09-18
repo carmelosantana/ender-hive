@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "9b15606d0911c3467e6b01e8389085f6",
+    "content-hash": "102bad41d1ddc86aaa65f78bda609d25",
     "packages": [
         {
             "name": "brick/math",
@@ -1466,7 +1466,62 @@
             "time": "2021-06-18T13:18:40+00:00"
         }
     ],
-    "packages-dev": [],
+    "packages-dev": [
+        {
+            "name": "bszyk/zip-wp",
+            "version": "v0.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/bszyk/zip-wp.git",
+                "reference": "98c373ce389f705b4744665fad0e435c08ad9174"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/bszyk/zip-wp/zipball/98c373ce389f705b4744665fad0e435c08ad9174",
+                "reference": "98c373ce389f705b4744665fad0e435c08ad9174",
+                "shasum": ""
+            },
+            "require-dev": {
+                "php": ">=5.3.0"
+            },
+            "type": "wordpress-plugin",
+            "autoload": {
+                "psr-0": {
+                    "ZipWP": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "GPL-3.0-or-later"
+            ],
+            "authors": [
+                {
+                    "name": "Brian Siklinski",
+                    "email": "bszyk.codes@gmail.com",
+                    "homepage": "https://bszyk.dev",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Create packaged & versioned WordPress plugin zip.",
+            "keywords": [
+                "wordpress",
+                "wordpress-plugin",
+                "zip"
+            ],
+            "support": {
+                "email": "bszyk.codes@gmail.com",
+                "issues": "https://github.com/bszyk/zip-wp/issues",
+                "source": "https://github.com/bszyk/zip-wp/tree/v0.1.0"
+            },
+            "funding": [
+                {
+                    "url": "https://www.paypal.com/donate/?business=QHL62AWL3PSMN&no_recurring=0&item_name=Anything+and+everything+helps%2C+thank+you%21",
+                    "type": "paypal"
+                }
+            ],
+            "time": "2021-11-10T17:23:03+00:00"
+        }
+    ],
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": [],
