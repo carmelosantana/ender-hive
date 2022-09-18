@@ -1,0 +1,3 @@
+
+= 0.1.0-alpha.11 =
+* Add packaging support to composer
