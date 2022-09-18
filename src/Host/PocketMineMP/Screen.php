@@ -40,7 +40,7 @@ class Screen
             $status = Status::INTERNAL_SERVER_ERROR;
         }
 
-        ray($command)->label('Process() $command');
+        ray($status, $command)->label('Process() $command');
         ray($log)->label('Process() $log');
 
         return $status;
