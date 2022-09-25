@@ -40,5 +40,12 @@
         "allow-plugins": {
             "composer/installers": true
         }
+    },
+    "extra": {
+        "installer-paths": {
+            "vendor-wordpress/{$name}/": [
+                "type:wordpress-plugin"
+            ]
+        }
     }
 }
