@@ -1,4 +1,5 @@
-_releases/
+_builds/
 vendor/
 composer.phar
+composer.lock
 .DS_Store
