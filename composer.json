@@ -1,7 +1,7 @@
 {
     "name": "carmelosantana/ender-hive",
     "description": "PocketMine server manager for WordPress.",
-    "type": "project",
+    "type": "wordpress-plugin",
     "license": "GNU General Public License v2",
     "authors": [
         {
@@ -25,14 +25,20 @@
         "symfony/yaml": "^6.0",
         "s1lentium/iptools": "^1.1",
         "kassner/log-parser": "~2.0",
-        "spatie/ray": "^1.35"
-    },
-    "require-dev": {
-        "bszyk/zip-wp": "^0.1.0"
+        "spatie/ray": "^1.35",
+        "composer/installers": "^2.2"
     },
     "scripts": {
-        "zip-wp": [
-            "ZipWP\\ZipWP::run_script"
+        "bento": [
+            "CarmeloSantana\\ReleaseBento\\Package::build"
         ]
+    },
+    "require-dev": {
+        "carmelosantana/release-bento": "^0.1.0"
+    },
+    "config": {
+        "allow-plugins": {
+            "composer/installers": true
+        }
     }
 }
