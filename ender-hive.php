@@ -3,7 +3,7 @@
 Plugin Name: Ender Hive
 Plugin URI: https://enderhive.com/
 Description: Minecraft server manager.
-Version: 0.1.0-alpha.11
+Version: 0.1.0-alpha.12
 Author: Carmelo Santana
 Author URI: https://carmelosantana.com/
 License: GNU General Public License v2 or later
@@ -24,7 +24,7 @@ if (!file_exists($composer = plugin_dir_path(__FILE__) . 'vendor/autoload.php'))
 require $composer;
 
 // Action Scheduler
-if (!file_exists($action_scheduler = plugin_dir_path(__FILE__) . 'vendor/woocommerce/action-scheduler/action-scheduler.php')) {
+if (!file_exists($action_scheduler = plugin_dir_path(__FILE__) . 'vendor-wordpress/action-scheduler/action-scheduler.php')) {
     wp_die(__('Error locating Action Scheduler. Please run <code>composer install</code>.', ENDER_HIVE));
 }
 require $action_scheduler;
