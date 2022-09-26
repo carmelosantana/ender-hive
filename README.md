@@ -2,8 +2,10 @@
 
 > WordPress plugin to manage Minecraft Bedrock servers.
 
+![Ender Hive dashboard screenshot](https://enderhive.dev/wp-content/uploads/2022/09/ender-hive-v0.1.0-alpha.13-no-shadow.png)
+
 - [Features](#features)
-  - [Hosts](#hosts)
+  - [Supported Hosts](#supported-hosts)
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Support](#support)
