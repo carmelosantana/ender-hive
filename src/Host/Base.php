@@ -201,9 +201,6 @@ abstract class Base implements Host
         try {
             $query->ConnectBedrock($this->getIp(), $this->getPortIp4());
         } catch (MinecraftQueryException $e) {
-            // Update status and last known state.
-            $this->updateStatus(Status::SERVICE_UNAVAILABLE);
-
             return [];
         }
 
@@ -230,8 +227,6 @@ abstract class Base implements Host
         } else {
             $this->status = Status::NO_CONTENT;
         }
-
-        $this->updateLastKnownState();
     }
 
     /**
@@ -239,8 +234,8 @@ abstract class Base implements Host
      *
      * @return void
      */
-    public function updateLastKnownState(): void
+    public function updateLastKnownState(int $status = 0): void
     {
-        update_post_meta($this->post_id, '_last_known_state', $this->getStatus());
+        update_post_meta($this->post_id, '_last_known_state', ($status > 0 ? $status : $this->status));
     }
 }

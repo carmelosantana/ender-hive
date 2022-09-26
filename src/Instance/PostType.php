@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace CarmeloSantana\EnderHive\Instance;
 
 use CarmeloSantana\EnderHive\Host\Server;
-use CarmeloSantana\EnderHive\Tools\Utils;
+use CarmeloSantana\EnderHive\Host\Status;
 use stdClass;
 
 class PostType
@@ -122,14 +122,13 @@ class PostType
                 }
                 break;
 
-            case 'ipv6':
-
-                break;
-
             case 'status':
-                $status = get_post_meta($post_id, '_last_known_state', true);
-                switch ($status) {
-                    case 200:
+                switch ($this->server->getStatus()) {
+                    case Status::ACCEPTED:
+                        echo '<span class="dashicons dashicons-yes-alt status-202"></span>' . __('Working', ENDER_HIVE);
+                        break;
+
+                    case Status::OK:
                         echo '<span class="dashicons dashicons-yes-alt status-200"></span>' . __('Online', ENDER_HIVE);
                         break;
 
