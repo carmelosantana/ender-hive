@@ -170,10 +170,9 @@ class Server extends Base
             case 'publish':
             case 'draft':
                 if (!$this->isRunning()) {
-                    $status = $this->command()->start();
-                } else {
-                    $status = Status::OK;
+                    $this->status = $this->command()->start();
                 }
+                $status = Status::OK;
                 break;
 
             default:
@@ -181,48 +180,46 @@ class Server extends Base
                 break;
         }
 
-        $this->updateStatus($status);
+        $this->updateLastKnownState($status);
 
         return $this->getStatus();
     }
 
     public function startWait(): int
     {
-        $status = $this->start();
+        $this->start();
 
         // Wait for the server to start
         while (!$this->isRunning()) {
             usleep(250000);
         }
 
-        $this->updateStatus(Status::OK);
+        $this->updateLastKnownState(Status::OK);
 
         return $this->getStatus();
-    }    
+    }
 
     public function stop(): int
     {
         if ($this->isRunning()) {
-            $status = $this->command()->stop();
-        } else {
-            $status = Status::NO_CONTENT;
+            $this->status = $this->command()->stop();
         }
 
-        $this->updateStatus($status);
+        $this->updateLastKnownState(Status::NO_CONTENT);
 
         return $this->getStatus();
     }
 
     public function stopWait(): int
     {
-        $status = $this->stop();
+        $this->stop();
 
         // Wait for the server to stop
         while ($this->isRunning()) {
             usleep(250000);
         }
 
-        $this->updateStatus(Status::NO_CONTENT);
+        $this->updateLastKnownState(Status::NO_CONTENT);
 
         return $this->getStatus();
     }
