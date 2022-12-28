@@ -81,13 +81,11 @@ class Fields
         $this->container_options = Container::make('theme_options', ENDER_HIVE_TITLE)
             ->set_icon('dashicons-networking')
             ->add_tab(__('System', ENDER_HIVE), [
-                Field::make('text', 'instance_path', __('Instances Directory', ENDER_HIVE))
-                    ->set_default_value(WP_CONTENT_DIR . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'pmmp')
-                    ->set_help_text(__('Path for server instances without trailing slash.', ENDER_HIVE))
-                    ->set_width(50),
+                Field::make('separator', 'servers_separator', __('Servers', ENDER_HIVE)),
                 Field::make('checkbox', 'server_type_pmmp', __('PocketMine-MP', ENDER_HIVE))
+                    ->set_help_text(__('Enable Minecraft server type.', ENDER_HIVE))
                     ->set_default_value(true)
-                    ->set_width(25),
+                    ->set_width(100),
                 Field::make('text', 'pmmp_install_sh_url', __('Pocketmine-MP Install URL', ENDER_HIVE))
                     ->set_default_value('https://get.pmmp.io')
                     ->set_conditional_logic([
@@ -95,6 +93,31 @@ class Fields
                             'field' => 'server_type_pmmp',
                             'value' => true,
                         ],
+                    ])
+                    ->set_width(100),
+                Field::make('separator', 'instances_separator', __('Instances', ENDER_HIVE)),
+                Field::make('text', 'instance_path', __('Instances Directory', ENDER_HIVE))
+                    ->set_default_value(WP_CONTENT_DIR . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'pmmp')
+                    ->set_help_text(__('Path for server instances without trailing slash.', ENDER_HIVE))
+                    ->set_width(100),
+                Field::make('separator', 'action_scheduler_separator', __('Action Scheduler', ENDER_HIVE)),
+                Field::make('select', 'action_scheduler_retention_period', __('Retention Period', ENDER_HIVE))
+                    ->set_default_value('weekly')
+                    ->set_options([
+                        'hourly' => __('Hourly', ENDER_HIVE),
+                        'daily' => __('Daily', ENDER_HIVE),
+                        'weekly' => __('Weekly', ENDER_HIVE),
+                        'monthly' => __('Monthly', ENDER_HIVE),
+                    ])
+                    ->set_width(50),
+                Field::make('select', 'action_scheduler_restart_interval', __('Restart Interval', ENDER_HIVE))
+                    ->set_default_value('weekly')
+                    ->set_options([
+                        'minute' => __('Minute', ENDER_HIVE),
+                        'survival' => __('Hourly', ENDER_HIVE),
+                        'creative' => __('Daily', ENDER_HIVE),
+                        'weekly' => __('Weekly', ENDER_HIVE),
+                        'monthly' => __('Monthly', ENDER_HIVE),
                     ])
                     ->set_width(50),
             ])

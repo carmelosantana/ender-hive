@@ -17,6 +17,7 @@ class Actions
         add_action('wp_trash_post', [$this, 'trash']);
         add_action('Instance\autorestart', [$this, 'autoRestart']);
         add_action('Instance\install', [$this, 'install']);
+        add_filter('action_scheduler_retention_period', [$this, 'retentionPeriod']);
     }
 
     /**
@@ -73,6 +74,26 @@ class Actions
     }
 
     /**
+     * Set the retention period for the Action Scheduler.
+     *
+     * @return int
+     */
+    function retentionPeriod(): int
+    {
+        switch (carbon_get_theme_option('action_scheduler_retention_period')) {
+            case 'hourly':
+                return HOUR_IN_SECONDS;
+            case 'daily':
+                return DAY_IN_SECONDS;
+            case 'monthly':
+                return MONTH_IN_SECONDS;
+            default:
+                return WEEK_IN_SECONDS;
+        }
+    }
+
+
+    /**
      * Handles action scheduling on init.
      *
      * @return void
@@ -80,7 +101,7 @@ class Actions
     public function scheduleActions(): void
     {
         if (!as_has_scheduled_action('Instance\autorestart')) {
-            as_schedule_recurring_action(time(), 60, 'Instance\autorestart');
+            as_schedule_recurring_action(time(), carbon_get_theme_option('action_scheduler_restart_time'), 'Instance\autorestart');
         }
     }
 
